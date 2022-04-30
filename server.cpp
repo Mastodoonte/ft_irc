@@ -6,16 +6,17 @@
 /*   By: florianmastorakis <florianmastorakis@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/28 18:05:43 by florianmast       #+#    #+#             */
-/*   Updated: 2022/04/29 14:10:18 by florianmast      ###   ########.fr       */
+/*   Updated: 2022/04/30 16:12:47 by florianmast      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "server.hpp"
+#include "include/server.hpp"
 
-#define closesocket(param) close(param) // Pour plus de clareté au regard du code et fonction windows
-#define INVALID_SOCKET -1
+
 #define SOCKET_ERROR -1
-#define PORT 23;
+#define PORT 23
+
+
 
 
 typedef int SOCKET; // Pas bon
@@ -28,9 +29,13 @@ int main(void)
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 //                                                                                          SOCKET_PARAM                                                                                                    |
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-    int sock;
+    int client;
     SOCKADDR_IN csin; // sin pour abreviation de socket_in, in est pour internet
     socklen_t crecsize = sizeof(csin);
+     int bufsize = 1024;
+    char buffer[bufsize];
+    bool isExit = false;
+    int clientCount = 1;
     
 
     
@@ -44,17 +49,17 @@ int main(void)
 	 * @param protocol  Dans le cas d'un tcp, le procotol c'est pas nécessaire, on le met à 0 
      * pour dire qu'on attend pas de protocol spécifique (par default)
      * */
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == -1)
+    client = socket(AF_INET, SOCK_STREAM, 0);
+    if (client == -1)
     {
         std::cout << "Error sock creation" << std::endl;
         exit(EXIT_FAILURE);
     }
     //configuration 
-    std::cout << "Socket: " << sock << "is now opened" << std::endl;
+    std::cout << "Socket: " << client << "is now opened" << std::endl;
     csin.sin_addr.s_addr = htonl(INADDR_ANY);    //convert unsigned int pour des network byte ordonnés pour adresse IP
     csin.sin_family = AF_INET;                   // pour employer protocole TCP pour IP
-    csin.sin_port = htons(23);                   // pour les unsigned short, pour des network byte ordonnés , listage du port
+    csin.sin_port = htons(PORT);                 // pour les unsigned short, pour des network byte ordonnés , listage du port
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 //                                                                                          CONNECTION AVEC CLIENT                                                                                          |
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -67,7 +72,7 @@ int main(void)
 	 * @param  addr    Passage par une structure spéciale pour cast le pointer et eviter les erreurs de compilatioh
 	 * @param addrlen  size in btye de l'adresse de la strucutre pointée par addr
      * */
-    int sock_err = bind(sock, (SOCKADDR*)&csin, sizeof(csin));
+    int sock_err = bind(client, (SOCKADDR*)&csin, sizeof(csin));
     if (sock_err == SOCKET_ERROR)
     {
          std::cout << "Error bind" << std::endl;
@@ -87,7 +92,7 @@ int main(void)
      * @param  socket   On a besoin de la socket evidemment
 	 * @param  backlog  le backlog représente le max de connexions pouvant être mise en attente  
      * */
-    sock_err = listen(sock, 5);
+    sock_err = listen(client, 5);
     std::cout << "listage du port: " << "23" << std::endl;
     if (sock_err == SOCKET_ERROR)
     {
@@ -110,9 +115,81 @@ int main(void)
      * */
    // SOCKADDR_IN csin;
     
-    socklen_t taille = sizeof(csin);
-    int csock = accept(sock, (SOCKADDR*)&csin, &crecsize);
-    std::cout << "Client is connecting with the socket " << csock << " from (a travailler)" << std::endl;
+    //socklen_t taille = sizeof(csin);
+    int server = accept(client, (SOCKADDR*)&csin, &crecsize);
+    std::cout << "Client is connecting with the socket " << server << " from (a travailler)" << std::endl;
+    if (server > 0)
+    {
+        while (isExit == false) 
+        {
+            strcpy(buffer, "=> Server connected...\n");
+            send(server, buffer, bufsize, 0);
+            std::cout << "=> Connected with the client #" << clientCount << ", you are good to go..." << std::endl;
+            std::cout << "\n=> Enter # to end the connection\n" << std::endl;
+    
+            /* 
+                Note that we would only get to this point after a 
+                client has successfully connected to our server. 
+                This reads from the socket. Note that the read() 
+                will block until there is something for it to read 
+                in the socket, i.e. after the client has executed a 
+                the send().
+                It will read either the total number of characters 
+                in the socket or 1024
+            */
+       
+            std::cout << "Client: ";
+            while (1)
+            {
+                recv(server, buffer, bufsize, 0);
+                std::cout << buffer << " ";
+                if (*buffer == '#') {
+                    *buffer = '*';
+                    isExit = true;
+                }
+                if (*buffer == '*')
+                    break;
+            }
+            if (isExit == true)
+                break;
+    
+            while (!isExit)
+            {
+               std::cout << "\nServer: ";
+                while (1)
+                {
+                    std::cin >> buffer;
+                    send(server, buffer, bufsize, 0);
+                    if (*buffer == '#') {
+                        send(server, buffer, bufsize, 0);
+                        *buffer = '*';
+                        isExit = true;
+                    }
+                    if (*buffer == '*')
+                        break;
+                } 
+                if (isExit == true)
+                break;
+                std::cout << "Client: ";
+                while (1)
+                {
+                    recv(server, buffer, bufsize, 0);
+                    std::cout << buffer << " ";
+                    if (*buffer == '#')
+                    {
+                        *buffer = '*';
+                        isExit = true;
+                    }
+                    if (*buffer == '*')
+                        break;
+                } 
+                if (isExit == true)
+                break;
+            } 
+        }
+    }
+
+    
     
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 //                                                                                         FERMETURE DE CONNEXION                                                                                           |
@@ -123,10 +200,11 @@ int main(void)
 	 * 
      * @param  socket  On a besoin du socket pour close la connection
      * */
-    std::cout << "Close the socket client" << std::endl;
-    closesocket(sock);
+   
     std::cout << "Close the socket server" << std::endl;
-    closesocket(csock);
-    std::cout << "Server closing is done" << std::endl;    
+    closesocket(server);
+    std::cout << "Close the socket client" << std::endl;
+    close(client);
+    std::cout << "Server closing is done" << std::endl; 
     return EXIT_SUCCESS;
 }

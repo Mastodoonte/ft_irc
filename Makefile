@@ -11,77 +11,58 @@ ESC_STOP = $(ESC_SEQ)0m
 PRINT_INTERLINE = printf '$(GREEN)$(BOLD)================================================================================$(ESC_STOP)\n'
 PRINT_INTERLINE_N = printf '$(YELLOW)$(BOLD)================================================================================$(ESC_STOP)\n'
 
-SRCS_C	= 	client.cpp 
-SRCS_S	= 	server.cpp 
 
- 		
-OBJS_C = ${SRCS_C:.cpp=.o}
-OBJS_S = ${SRCS_S:.cpp=.o}
+NAME_S	=	server
+NAME_C = 	client
+
+SRCS	:=	server.cpp
+
+HEAD	:=	include/Server.hpp
+			
+
+CLIENT_SRC = client.cpp
+
+CLIENT_HEADER = include/client.hpp
+
+C++		= c++ -Wall -Wextra -Werror -std=c++98
+
+OBJS	=	$(SRCS:.cpp=.o)
+
+CLIENT_OBJS = $(CLIENT_SRC:.cpp=.o)
+
+all:		$(NAME_S)
+	@printf '$(GREEN)$(BOLD)=====================================================================\n';
+	@printf '$(YELLOW)$(BOLD)|          ____  _____         _     ___   ____                     |\n';
+	@printf '$(YELLOW)$(BOLD)|          |__     |           |    |__/   |                        |\n';
+	@printf '$(YELLOW)$(BOLD)|          |       |           |    |  \   |___                     |\n';
+	@printf '$(YELLOW)$(BOLD)|                                                                   |\n';
+	@printf '$(GREEN)$(BOLD)===================================================================== \n';
+	@printf '$(YELLOW)$(BOLD)%s ${NAME_S} $(ESC_STOP)$(YELLOW) built$(ESC_STOP) √\n' '$@'
 
 
-HEADER	= include/
-
-NAME = client
-
-NAME1 = server
-
-CLANG = c++ 
-
-C++FLAGS =  -Wall -Werror -Wextra -std=c++98
-
-RM = rm -rf
+$(NAME_S):	$(OBJS)
+			$(C++) $(OBJS) -o $(NAME_S)
 
 
 
-$(NAME): $(OBJ)
-	@printf '$(GREEN)$(BOLD)================================================================================\n';
-	@printf '$(YELLOW)$(BOLD)|          ____  _____         _     ___   ____                                |\n';
-	@printf '$(YELLOW)$(BOLD)|          |__     |         	|    |__/   |                                   |\n';
-	@printf '$(YELLOW)$(BOLD)|          |       |           |    |  \   |___                                |\n';
-	@printf '$(YELLOW)$(BOLD)|                                                                              |\n';
-	@printf '$(GREEN)$(BOLD)================================================================================ \n';
-	@$(CLANG) $(C++FLAGS) -I $(HEADER) -o $(NAME_CLIENT) $(OBJ_C)
-	@$(CLANG) $(C++FLAGS) -I $(HEADER) -o $(NAME_SERVER) $(OBJ_S)
+client:		$(CLIENT_OBJS)
+			@$(C++) $(CLIENT_OBJS) -o $(NAME_C)
+	@printf '$(YELLOW)$(BOLD)%s ${NAME_C} $(ESC_STOP)$(YELLOW) built$(ESC_STOP) √\n' '$@'
+			
 
-%.o : %.cpp
-	$(CLANG) $(C++FLAGS) -I $(HEADER) -c $< -o $@
-	$(CLANG) $(C++FLAGS) -I include -D STD_ ${SRCS} -o $(NAME1)
-test:
-	@./ft_test >> out1; ./std_test >> out2; 
-	@printf '\n';
-	@diff -y out1 out2 
-#@rm -f out1 out2
-#./a >> out1; ./a_stl >> out2; vimdiff out1 out2
-	
-debug:
-	@g++ -g ${SRCS} -Wall -Werror -Wextra -o debog_exec
-	@printf '$(YELLOW)$(BOLD) debog_exec built $(ESC_STOP) √\n' '$@';
-	@printf '\n'
+clean:
+			rm -rf $(OBJS) $(CLIENT_OBJS)
 
-clean: 
-	@printf '$(GREEN)$(BOLD)================================================================================\n';
-	@printf '$(YELLOW)$(BOLD)|          ____  _____         _     ___   ____                                |\n';
-	@printf '$(YELLOW)$(BOLD)|          |__     |         	|    |__/   |                                   |\n';
-	@printf '$(YELLOW)$(BOLD)|          |       |           |    |  \   |___                                |\n';
-	@printf '$(YELLOW)$(BOLD)|                                                                              |\n';
-	@printf '$(GREEN)$(BOLD)================================================================================ \n';
-	@printf '$(ESC_STOP)'
-	${RM} ${OBJS}  makdebog_exec debog_exec.dSYM
-	@$(PRINT_INTERLINE)
-	@printf '$(RED)$(BOLD)                              %s\ CLEANNING                       \n' '$(NAME)'
-	@$(PRINT_INTERLINE)
-	@printf '$(RED)$(BOLD) %s\ removed\n' '$(OBJS)'
-	@$(PRINT_INTERLINE)
-	@printf '\n'
-	@printf '\n'
-	@rm -f out1 out2
+.cpp.o:
+			$(C++) -c $< -o $(<:.cpp=.o)
 
-fclean: clean
-	@${RM} ${NAME} ${NAME1}
-	@$(PRINT_INTERLINE)
-	@printf '$(RED)$(BOLD)                              %s\ FCLEAN                          \n' '$(NAME)'
-	@$(PRINT_INTERLINE)
-	@printf '$(RED)$(BOLD) %s\ removed\n' '$(NAME)' '$(NAME1)'
-	@$(PRINT_INTERLINE)
+$(OBJS):	$(HEAD)
 
-re: fclean all
+$(CLIENT_OBJS):	$(CLIENT_HEADER)
+
+fclean:		clean
+			rm -rf $(NAME_S) $(NAME_C)
+
+re:			fclean all
+
+.PHONY:		all clean fclean re client
