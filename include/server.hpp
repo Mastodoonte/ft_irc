@@ -6,7 +6,7 @@
 /*   By: florianmastorakis <florianmastorakis@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/29 11:33:22 by florianmast       #+#    #+#             */
-/*   Updated: 2022/04/30 15:14:11 by florianmast      ###   ########.fr       */
+/*   Updated: 2022/04/30 16:26:15 by florianmast      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,8 +18,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <iostream>
 
 /*struct sockaddr_in

@@ -6,7 +6,7 @@
 /*   By: florianmastorakis <florianmastorakis@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/28 18:05:43 by florianmast       #+#    #+#             */
-/*   Updated: 2022/04/30 16:12:47 by florianmast      ###   ########.fr       */
+/*   Updated: 2022/04/30 17:56:34 by florianmast      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,15 +14,7 @@
 
 
 #define SOCKET_ERROR -1
-#define PORT 23
-
-
-
-
-typedef int SOCKET; // Pas bon
-typedef struct sockaddr_in SOCKADDR_IN;
-typedef struct sockaddr SOCKADDR;
-    
+#define PORT 23 //Attention tentative sur port 22 et c'est le ssh, le 23 permet une initiation de communication tcp (udp = 25)
 
 int main(void)
 {
@@ -30,12 +22,12 @@ int main(void)
 //                                                                                          SOCKET_PARAM                                                                                                    |
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
     int client;
-    SOCKADDR_IN csin; // sin pour abreviation de socket_in, in est pour internet
-    socklen_t crecsize = sizeof(csin);
-     int bufsize = 1024;
-    char buffer[bufsize];
-    bool isExit = false;
-    int clientCount = 1;
+    struct sockaddr_in      csin; // sin pour abreviation de socket_in, in est pour internet
+    socklen_t               crecsize = sizeof(csin);
+    int                     bufsize = 1024;
+    char                    buffer[bufsize];
+    bool                    isExit = false;
+    int                     clientCount = 1;
     
 
     
@@ -55,11 +47,15 @@ int main(void)
         std::cout << "Error sock creation" << std::endl;
         exit(EXIT_FAILURE);
     }
-    //configuration 
-    std::cout << "Socket: " << client << "is now opened" << std::endl;
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+//                                                                                             CONFIGURATION                                                                                                |
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+
+    std::cout << "Socket: " << client << " is now opened in TCP/IP" << std::endl;
     csin.sin_addr.s_addr = htonl(INADDR_ANY);    //convert unsigned int pour des network byte ordonnés pour adresse IP
     csin.sin_family = AF_INET;                   // pour employer protocole TCP pour IP
     csin.sin_port = htons(PORT);                 // pour les unsigned short, pour des network byte ordonnés , listage du port
+    
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 //                                                                                          CONNECTION AVEC CLIENT                                                                                          |
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -72,15 +68,13 @@ int main(void)
 	 * @param  addr    Passage par une structure spéciale pour cast le pointer et eviter les erreurs de compilatioh
 	 * @param addrlen  size in btye de l'adresse de la strucutre pointée par addr
      * */
-    int sock_err = bind(client, (SOCKADDR*)&csin, sizeof(csin));
+    int sock_err = bind(client, (struct sockaddr*)&csin, sizeof(csin));
     if (sock_err == SOCKET_ERROR)
     {
          std::cout << "Error bind" << std::endl;
         exit(EXIT_FAILURE);
     }
-    
-    
-    
+
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 //                                                                                          LISTEN AVEC CLIENT                                                                                              |
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -99,7 +93,8 @@ int main(void)
         std::cout << "Error listen" << std::endl;
         exit(EXIT_FAILURE);
     } 
-    std::cout << "Please wait, the client is connecting to the port 23" << std::endl;
+    std::cout << "Please wait, the client is connecting to the port:" << PORT << std::endl;
+    
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 //                                                                                                ACCEPT                                                                                                    |
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -113,30 +108,17 @@ int main(void)
 	 * @param addrlen  different de bind, ont attend une variable taille de type socklen_t (un entier) representnt la taille du contexte d'adressage du client
      * on passe l'addresse de cette variable à ce parametre
      * */
-   // SOCKADDR_IN csin;
-    
-    //socklen_t taille = sizeof(csin);
-    int server = accept(client, (SOCKADDR*)&csin, &crecsize);
-    std::cout << "Client is connecting with the socket " << server << " from (a travailler)" << std::endl;
+    //Ici donc on prend le relai et on accepte le "connect", de notre client 
+    int server = accept(client, (struct sockaddr*)&csin, &crecsize);
+    std::cout << "Client is connecting with the socket " << server << " from:" << inet_ntoa(csin.sin_addr) << std::endl;
     if (server > 0)
     {
-        while (isExit == false) 
+        while (isExit == false && server > 0) 
         {
             strcpy(buffer, "=> Server connected...\n");
             send(server, buffer, bufsize, 0);
             std::cout << "=> Connected with the client #" << clientCount << ", you are good to go..." << std::endl;
             std::cout << "\n=> Enter # to end the connection\n" << std::endl;
-    
-            /* 
-                Note that we would only get to this point after a 
-                client has successfully connected to our server. 
-                This reads from the socket. Note that the read() 
-                will block until there is something for it to read 
-                in the socket, i.e. after the client has executed a 
-                the send().
-                It will read either the total number of characters 
-                in the socket or 1024
-            */
        
             std::cout << "Client: ";
             while (1)
@@ -189,8 +171,6 @@ int main(void)
         }
     }
 
-    
-    
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 //                                                                                         FERMETURE DE CONNEXION                                                                                           |
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -200,9 +180,9 @@ int main(void)
 	 * 
      * @param  socket  On a besoin du socket pour close la connection
      * */
-   
+//https://stackoverflow.com/questions/4160347/close-vs-shutdown-socket (tres interessant sur le choix de close ou shutdown, better close())
     std::cout << "Close the socket server" << std::endl;
-    closesocket(server);
+    close(server);
     std::cout << "Close the socket client" << std::endl;
     close(client);
     std::cout << "Server closing is done" << std::endl; 
