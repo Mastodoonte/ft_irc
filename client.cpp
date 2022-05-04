@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: florianmastorakis <florianmastorakis@st    +#+  +:+       +#+        */
+/*   By: flmastor <flmastor@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/29 13:58:39 by florianmast       #+#    #+#             */
-/*   Updated: 2022/04/30 17:46:08 by florianmast      ###   ########.fr       */
+/*   Updated: 2022/05/03 12:14:19 by flmastor         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,15 +21,15 @@
 #include <arpa/inet.h> // Pour inet_addr() et inet_ntoa()
 #include <iostream>
 #include <unistd.h> // Pour close()
-
-#define PORT 23
+#include <cstdlib> 
+#define PORT 8888
 
 int main()
 {
     int client; 
     struct sockaddr_in server;
-    int bufsize = 1024;
-    char buffer[1024] ;
+    int bufsize = 32;
+    char buffer[bufsize] ;
     bool isExit = false;
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 //                                                                                            SOCKET CREATION                                                                                               |

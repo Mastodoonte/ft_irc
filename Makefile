@@ -17,7 +17,7 @@ NAME_C = 	client
 
 SRCS	:=	server.cpp
 
-HEAD	:=	include/Server.hpp
+HEAD	:=	include/server.hpp
 			
 
 CLIENT_SRC = client.cpp
