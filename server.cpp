@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "include/server.hpp"
+#include "include/user.hpp"
 #include <unistd.h>
 #include <string.h>
 #include <cstdlib> 
@@ -18,6 +19,8 @@
 #include <stdlib.h>
 #include <cerrno>
 #include <iostream>
+#include <map>
+
 //TODO Tous les messages envoyés par un client dans un channel doivent être transmis
 //à tous les clients ayant rejoint ce channel.
 
@@ -33,7 +36,7 @@
 //https://ocamil.com/index.php/c-c/c-c-les-sockets
 
 #define SOCKET_ERROR -1
-#define PORT 8888 //Attention tentative sur port 22 et c'est le ssh, le 23 permet une initiation de communication tcp (udp = 25)
+#define PORT 6667 //Attention tentative sur port 22 et c'est le ssh, le 23 permet une initiation de communication tcp (udp = 25)
 #define MAX_CLIENT 3
 
 int main(void)
@@ -42,19 +45,15 @@ int main(void)
 //                                                                                          SOCKET_PARAM                                                                                                    |
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
     //Parametre serveur
-    int client;
-    int i = 0;
+    int server_socket;
     int nb_client = 0;
     int flags = 0;
     struct sockaddr_in sin;   // sin pour abreviation de socket_in, in est pour internet
     
     //Client management 
-    int                     csock[MAX_CLIENT];
-    struct sockaddr_in      csin[MAX_CLIENT];
-
+    std::map<int, User>  user_tab;
     //Data management 
     int                     bufsize = 32;
-    socklen_t               size = sizeof(sin);
     char                    buffer[bufsize];
  //   bool                    isExit = false;
     int                     clientCount = 1;
@@ -71,14 +70,14 @@ int main(void)
 	 * @param protocol  Dans le cas d'un tcp, le procotol c'est pas nécessaire, on le met à 0 
      * pour dire qu'on attend pas de protocol spécifique (par default)
      * */
-    client = socket(AF_INET, SOCK_STREAM, 0);
+    server_socket = socket(AF_INET, SOCK_STREAM, 0);
     //https://stackoverflow.com/questions/24194961/how-do-i-use-setsockoptso-reuseaddr
     int enable = 1;
-    if (setsockopt(client, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+    if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
     {
         std::cout << "setsockopt(SO_REUSEADDR) failed" << std::endl;
     }
-    if (client == -1)
+    if (server_socket == -1)
     {
         std::cout << "Error sock creation" << std::endl;
         exit(EXIT_FAILURE);
@@ -86,13 +85,13 @@ int main(void)
 
      
     //Cf sujet, mode non bloquant pour la fonction accept
-    flags=fcntl(client,F_GETFL);
-    fcntl(client,F_SETFL,flags | O_NONBLOCK);
+    flags=fcntl(server_socket,F_GETFL);
+    fcntl(server_socket,F_SETFL,flags | O_NONBLOCK);
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 //                                                                                             CONFIGURATION                                                                                                |
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 
-    std::cout << "Socket: " << client << " is now opened in TCP/IP" << std::endl;
+    std::cout << "Socket: " << server_socket << " is now opened in TCP/IP" << std::endl;
     sin.sin_addr.s_addr = htonl(INADDR_ANY);    //convert unsigned int pour des network byte ordonnés pour adresse IP
     sin.sin_family = AF_INET;                   // pour employer protocole TCP pour IP
     sin.sin_port = htons(PORT);                 // pour les unsigned short, pour des network byte ordonnés , listage du port
@@ -109,7 +108,7 @@ int main(void)
 	 * @param  addr    Passage par une structure spéciale pour cast le pointer et eviter les erreurs de compilatioh
 	 * @param addrlen  size in btye de l'adresse de la strucutre pointée par addr
      * */
-    int sock_err = bind(client, (struct sockaddr*)&sin, sizeof(sin));
+    int sock_err = bind(server_socket, (struct sockaddr*)&sin, sizeof(sin));
     if (sock_err == SOCKET_ERROR)
     {
         if (errno == EACCES)
@@ -155,7 +154,7 @@ int main(void)
      * @param  socket   On a besoin de la socket evidemment
 	 * @param  backlog  le backlog représente le max de connexions pouvant être mise en attente  
      * */
-    sock_err = listen(client, MAX_CLIENT);
+    sock_err = listen(server_socket, MAX_CLIENT);
     std::cout << "listage du port: " << PORT << std::endl;
     if (sock_err == SOCKET_ERROR)
     {
@@ -168,10 +167,10 @@ int main(void)
 //                                                                                   SET TOUTES LES SOCKETS EN INVALIDES (-1)                                                                               |
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
  
-     for(i=0;i<MAX_CLIENT;i++)
+    /* for(i=0;i<MAX_CLIENT;i++)
     {
         csock[i] = -1;
-    }
+    }*/
     
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 //                                                                                                ACCEPT                                                                                                    |
@@ -195,9 +194,13 @@ int main(void)
     int nb_slot = 0;
     //isExit = false;
    // while (isExit == false)
+
+    fd_set current_socket, ready_socket;
+    FD_ZERO(&current_socket);
+    FD_SET(server_socket, &current_socket);
     while (1) 
-    {
-        if (start == true)
+    {        
+	if (start == true)
         {
             
             strcpy(buffer, "=> Server connected...\n");
@@ -206,83 +209,72 @@ int main(void)
              std::cout << "Client: ";
             start = false;
         }
-        
+
+	ready_socket = current_socket;
+	if (select(1024, &ready_socket, NULL, NULL, NULL) < 0)
+	{
+	    std::cout << "Error, select failed " << strerror(errno) << std::endl;
+	    exit(EXIT_FAILURE);
+	}
+	for (int j = 0; j < 1024; j++)
+	{
+	    if (FD_ISSET(j, &ready_socket))
+	    {
+		if (j == server_socket)
+		{
+		    //Add a new client
+		    if (nb_client < MAX_CLIENT)
+		    {
+			/*gérer la connection de nouveaux clients*/
+			User new_user;
     
-         i=0;
-    
-        /*si on peut encore recevoir des clients*/
-        if (nb_client < MAX_CLIENT)
-        {
-            /*gérer la connection de nouveaux clients*/
-            struct sockaddr_in new_sin;
-            int new_client = 0;
-            int success =0;
-    
-            new_client = accept(client,(struct sockaddr*)&new_sin, &size);
-            /*si le client est valide (il peut être invalide puisque sock est en mode non bloquante)*/
-            if (new_client != -1)
-            {
-                std::cout << "Un nouveau client tente de se connecter : " << inet_ntoa(new_sin.sin_addr) << " Avec pour socket : " << new_client << std::endl;
-                /*on trouve une place pour le client*/
-                while (i < MAX_CLIENT)
-                {
-                    if(csock[i] == -1)
-                    {
-                        csock[i]= new_client;
-                        csin[i]= new_sin;
-                        success = 1;
-                        break;
-                    }
-                    i++;
-                }
-                if(success)
-                {
-                    nb_slot++;
-                    std::cout << "Accepted, we have " << nb_slot << "/" << MAX_CLIENT << "slot "<< std::endl;
-                }
-                /*si il n'y a plus de place ( normalement il doit y en avoir puisqu'on à vérifier que nb_client < MAX_CLIENT )*/
-                else
-                    std::cout << "Refused" <<  nb_slot << "/" << MAX_CLIENT << "slot "<< std::endl;
-            }
-        }
-    
-        i=0;
- 
-        /*on parcours le tableau de client*/
-        while (i < MAX_CLIENT)
-        {
-            /*si client valide*/
-            if (csock[i] != -1)
-            {
-                int s_recv = 0;
-                if ( (s_recv = recv(csock[i], buffer, 32,MSG_DONTWAIT) ) == 32)
-                {
-                    /*tout c'est bien passer*/
-                    std::cout << inet_ntoa(csin[i].sin_addr) << "csock: " << csock[i] << " send :" << buffer << std::endl;
-                  //  printf("%s (csock : %d) : envoit : «%s»\n",inet_ntoa(csin[i].sin_addr),csock[i],buf);
-                    /*on renvoit*/
-                    send(csock[i],buffer,32,0);
-                }
-                else if (s_recv == 0)
-                {
-                    /*si la taille reçu égale à 0 : déconnection */
-                    std::cout << inet_ntoa(csin[i].sin_addr) << "csock: " << csock[i] << "disconected " << std::endl;
+			/*si le client est valide (il peut être invalide puisque sock est en mode non bloquante)*/
+			if (new_user.acceptUsr(server_socket) != -1)
+			{
+		    /*on trouve une place pour le client*/
+			    user_tab.insert(std::pair<int, User>(j, new_user));
+			    nb_slot++;
+			    FD_SET(user_tab[j].getSocket(), &current_socket);
+			    std::cout << "Accepted, we have " << nb_slot << "/" << MAX_CLIENT << "slot "<< std::endl;
+			}
+			/*si il n'y a plus de place ( normalement il doit y en avoir puisqu'on à vérifier que nb_client < MAX_CLIENT )*/
+			else
+			    std::cout << "Refused" <<  nb_slot << "/" << MAX_CLIENT << "slot "<< std::endl;
+		    }
+		}
+		else
+		{
+		    /*si client valide*/
+			int s_recv = 0;
+			if ( (s_recv = recv(user_tab[j].getSocket(), buffer, 32,MSG_DONTWAIT) ) == 32)
+			{
+			    /*tout c'est bien passer*/
+			    std::cout << inet_ntoa(user_tab[j].getAddr().sin_addr) << " csock: " << user_tab[j].getSocket() << " send :" << buffer << std::endl;
+			    //  printf("%s (csock : %d) : envoit : «%s»\n",inet_ntoa(csin[i].sin_addr),csock[i],buf);
+			    /*on renvoit*/
+			    send(user_tab[j].getSocket() ,buffer,strlen(buffer),0);
+			}
+			else if (s_recv == 0)
+			{
+			    /*si la taille reçu égale à 0 : déconnection */
+			    std::cout << inet_ntoa(user_tab[j].getAddr().sin_addr) << " csock: " << user_tab[j].getSocket() << "disconected " << std::endl;
                     
-                   // printf("%s (csock : %d) : déconnection\n",inet_ntoa(csin[i].sin_addr),csock[i]);
-                    /*on ferme la socket*/
-                    close(csock[i]);
-                    /*on libère une place de client*/
-                    csock[i]=-1;
-                    nb_client--;
-                    nb_slot--;
-                    std::cout << "We have " << nb_slot << "/" << MAX_CLIENT << "slot "<< std::endl;
-                }
-                else if (s_recv == -1)
-                    continue ;/* = pas de données reçu ( mode non bloquant de recv)*/
- 
-            }
-            i++;
-        }
+			    // printf("%s (csock : %d) : déconnection\n",inet_ntoa(csin[i].sin_addr),csock[i]);
+			    /*on ferme la socket*/
+			    user_tab.erase(j);
+			    /*on libère une place de client*/
+			    nb_client--;
+			    nb_slot--;
+			    std::cout << "We have " << nb_slot << "/" << MAX_CLIENT << "slot "<< std::endl;
+			}
+			else if (s_recv == -1)
+			    continue ;/* = pas de données reçu ( mode non bloquant de recv)*/
+			FD_CLR(user_tab[j].getSocket(), &current_socket);
+		}
+	    }
+	}
+    }
+
             /*while (1)
             {
                 recv(client, buffer, bufsize, 0);
@@ -351,7 +343,6 @@ int main(void)
                 if (isExit == true)
                 break;
             } */
-    }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 //                                                                                         FERMETURE DE CONNEXION                                                                                           |
@@ -364,7 +355,7 @@ int main(void)
      * */
 //https://stackoverflow.com/questions/4160347/close-vs-shutdown-socket (tres interessant sur le choix de close ou shutdown, better close())
     std::cout << "Close the socket client" << std::endl;
-    close(client);
+    close(server_socket);
     std::cout << "Server closing is done" << std::endl; 
     return EXIT_SUCCESS;
 }

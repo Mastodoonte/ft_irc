@@ -86,9 +86,10 @@ int main()
         //htons() converti unsigned short du reseau byte order au client byte order 
         
         std::cout << "Connexion on " << inet_ntoa(server.sin_addr) << " on port " << htons(server.sin_port) << std::endl;
+
         while (1)
         {
-          std::cout << "Client: ";
+	  std::cout << "Client: ";
           while (1)
           {
               std::cin >> buffer;

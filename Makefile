@@ -15,9 +15,11 @@ PRINT_INTERLINE_N = printf '$(YELLOW)$(BOLD)====================================
 NAME_S	=	server
 NAME_C = 	client
 
-SRCS	:=	server.cpp
+SRCS	:=	server.cpp \
+		user.cpp \
 
-HEAD	:=	include/server.hpp
+HEAD	:=	include/server.hpp \
+		include/user.hpp \
 			
 
 CLIENT_SRC = client.cpp
