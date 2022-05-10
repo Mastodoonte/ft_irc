@@ -1,9 +1,15 @@
 #include "include/user.hpp"
 
-User::User(void) {}
+User::User(void) : socket(-1) {}
 
 User::~User(void) {
-    close(socket);
+}
+
+User	&User::operator=(const User &cp) {
+    if (this == &cp)
+	return (*this);
+    *this = cp;
+    return (*this);
 }
 
 int	User::acceptUsr(int server_socket) {
@@ -20,6 +26,10 @@ int	User::acceptUsr(int server_socket) {
 
 int	User::getSocket(void) {
  return (socket);
+}
+
+void	User::clear(void) {
+    close(socket);
 }
 
 sockaddr_in	&User::getAddr(void) {

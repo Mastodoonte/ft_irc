@@ -18,6 +18,9 @@ class	User
 	    int acceptUsr(int	server_socket);
 	    int	getSocket(void);
 	    sockaddr_in	&getAddr(void);
+	    void    clear(void);
+
+	    User    &operator=(const User &cp);
     private:
 	    int	socket;
 	    sockaddr_in	addr;

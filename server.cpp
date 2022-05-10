@@ -36,7 +36,7 @@
 //https://ocamil.com/index.php/c-c/c-c-les-sockets
 
 #define SOCKET_ERROR -1
-#define PORT 6667 //Attention tentative sur port 22 et c'est le ssh, le 23 permet une initiation de communication tcp (udp = 25)
+#define PORT 8888 //Attention tentative sur port 22 et c'est le ssh, le 23 permet une initiation de communication tcp (udp = 25)
 #define MAX_CLIENT 3
 
 int main(void)
@@ -211,6 +211,7 @@ int main(void)
         }
 
 	ready_socket = current_socket;
+	errno = 0;
 	if (select(1024, &ready_socket, NULL, NULL, NULL) < 0)
 	{
 	    std::cout << "Error, select failed " << strerror(errno) << std::endl;
@@ -231,10 +232,10 @@ int main(void)
 			/*si le client est valide (il peut être invalide puisque sock est en mode non bloquante)*/
 			if (new_user.acceptUsr(server_socket) != -1)
 			{
-		    /*on trouve une place pour le client*/
-			    user_tab.insert(std::pair<int, User>(j, new_user));
+			    /*on trouve une place pour le client*/
+			    user_tab.insert(std::pair<int, User>(new_user.getSocket(), new_user));
 			    nb_slot++;
-			    FD_SET(user_tab[j].getSocket(), &current_socket);
+			    FD_SET(new_user.getSocket(), &current_socket);
 			    std::cout << "Accepted, we have " << nb_slot << "/" << MAX_CLIENT << "slot "<< std::endl;
 			}
 			/*si il n'y a plus de place ( normalement il doit y en avoir puisqu'on à vérifier que nb_client < MAX_CLIENT )*/
@@ -246,21 +247,22 @@ int main(void)
 		{
 		    /*si client valide*/
 			int s_recv = 0;
-			if ( (s_recv = recv(user_tab[j].getSocket(), buffer, 32,MSG_DONTWAIT) ) == 32)
+			if ( (s_recv = recv(j, buffer, 32,MSG_DONTWAIT) ) == 32)
 			{
 			    /*tout c'est bien passer*/
-			    std::cout << inet_ntoa(user_tab[j].getAddr().sin_addr) << " csock: " << user_tab[j].getSocket() << " send :" << buffer << std::endl;
+			    std::cout << inet_ntoa(user_tab[j].getAddr().sin_addr) << " csock: " << j << " send :" << buffer << std::endl;
 			    //  printf("%s (csock : %d) : envoit : «%s»\n",inet_ntoa(csin[i].sin_addr),csock[i],buf);
 			    /*on renvoit*/
-			    send(user_tab[j].getSocket() ,buffer,strlen(buffer),0);
+			    send(j ,buffer,strlen(buffer),0);
 			}
 			else if (s_recv == 0)
 			{
 			    /*si la taille reçu égale à 0 : déconnection */
-			    std::cout << inet_ntoa(user_tab[j].getAddr().sin_addr) << " csock: " << user_tab[j].getSocket() << "disconected " << std::endl;
+			    std::cout << inet_ntoa(user_tab[j].getAddr().sin_addr) << " csock: " << j << "disconected " << std::endl;
                     
 			    // printf("%s (csock : %d) : déconnection\n",inet_ntoa(csin[i].sin_addr),csock[i]);
 			    /*on ferme la socket*/
+			    user_tab[j].clear();
 			    user_tab.erase(j);
 			    /*on libère une place de client*/
 			    nb_client--;
@@ -269,7 +271,7 @@ int main(void)
 			}
 			else if (s_recv == -1)
 			    continue ;/* = pas de données reçu ( mode non bloquant de recv)*/
-			FD_CLR(user_tab[j].getSocket(), &current_socket);
+			FD_CLR(j, &current_socket);
 		}
 	    }
 	}
