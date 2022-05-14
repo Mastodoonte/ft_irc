@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <cerrno>
 #include <iostream>
+#include <ctime>
 #include <map>
 
 //TODO Tous les messages envoyés par un client dans un channel doivent être transmis
@@ -36,7 +37,7 @@
 //https://ocamil.com/index.php/c-c/c-c-les-sockets
 
 #define SOCKET_ERROR -1
-#define PORT 8888 //Attention tentative sur port 22 et c'est le ssh, le 23 permet une initiation de communication tcp (udp = 25)
+#define PORT 6667 //Attention tentative sur port 22 et c'est le ssh, le 23 permet une initiation de communication tcp (udp = 25)
 #define MAX_CLIENT 3
 
 int main(void)
@@ -53,7 +54,7 @@ int main(void)
     //Client management 
     std::map<int, User>  user_tab;
     //Data management 
-    int                     bufsize = 32;
+    int                     bufsize = 100;
     char                    buffer[bufsize];
  //   bool                    isExit = false;
     int                     clientCount = 1;
@@ -192,14 +193,16 @@ int main(void)
    // std::cout << "Client is connecting with the socket " << server << " from:" << inet_ntoa(sin.sin_addr) << std::endl;
     bool start = true;
     int nb_slot = 0;
+    time_t  now;
     //isExit = false;
    // while (isExit == false)
 
+    now = std::time(0);
     fd_set current_socket, ready_socket;
     FD_ZERO(&current_socket);
     FD_SET(server_socket, &current_socket);
     while (1) 
-    {        
+    {
 	if (start == true)
         {
             
@@ -209,6 +212,18 @@ int main(void)
              std::cout << "Client: ";
             start = false;
         }
+	
+	//Tout les X temps je ping tout les utilisateurs
+	if (std::time(0) - now >= 100)
+	{
+	    std::map<int, User>::iterator begin = user_tab.begin();
+
+	    while (begin != user_tab.end())
+	    {
+		now = begin->second.ping();	
+		begin++;
+	    }
+	}
 
 	ready_socket = current_socket;
 	errno = 0;
@@ -246,32 +261,34 @@ int main(void)
 		else
 		{
 		    /*si client valide*/
-			int s_recv = 0;
-			if ( (s_recv = recv(j, buffer, 32,MSG_DONTWAIT) ) == 32)
-			{
-			    /*tout c'est bien passer*/
-			    std::cout << inet_ntoa(user_tab[j].getAddr().sin_addr) << " csock: " << j << " send :" << buffer << std::endl;
-			    //  printf("%s (csock : %d) : envoit : «%s»\n",inet_ntoa(csin[i].sin_addr),csock[i],buf);
-			    /*on renvoit*/
-			    send(j ,buffer,strlen(buffer),0);
-			}
-			else if (s_recv == 0)
-			{
-			    /*si la taille reçu égale à 0 : déconnection */
-			    std::cout << inet_ntoa(user_tab[j].getAddr().sin_addr) << " csock: " << j << "disconected " << std::endl;
+		    int s_recv = 0;
+		    bzero(buffer, 100);
+		    s_recv = recv(j, buffer, 100, MSG_DONTWAIT);
+		    if (s_recv != -1 && s_recv)
+		    {
+		        /*tout c'est bien passer*/
+		        std::cout << inet_ntoa(user_tab[j].getAddr().sin_addr) << " csock: " << j << " send :" << buffer << std::endl;
+		       //  printf("%s (csock : %d) : envoit : «%s»\n",inet_ntoa(csin[i].sin_addr),csock[i],buf);
+			 /*Parsing de la commande*/
+			user_tab[j].chooseCMD(buffer);
+		    }
+		    else if (s_recv == 0)
+		    {
+			/*si la taille reçu égale à 0 : déconnection */
+			std::cout << inet_ntoa(user_tab[j].getAddr().sin_addr) << " csock: " << j << "disconected " << std::endl;
                     
-			    // printf("%s (csock : %d) : déconnection\n",inet_ntoa(csin[i].sin_addr),csock[i]);
-			    /*on ferme la socket*/
-			    user_tab[j].clear();
-			    user_tab.erase(j);
-			    /*on libère une place de client*/
-			    nb_client--;
-			    nb_slot--;
-			    std::cout << "We have " << nb_slot << "/" << MAX_CLIENT << "slot "<< std::endl;
-			}
-			else if (s_recv == -1)
-			    continue ;/* = pas de données reçu ( mode non bloquant de recv)*/
-			FD_CLR(j, &current_socket);
+			// printf("%s (csock : %d) : déconnection\n",inet_ntoa(csin[i].sin_addr),csock[i]);
+			/*on ferme la socket*/
+			user_tab[j].clear();
+			user_tab.erase(j);
+			/*on libère une place de client*/
+			nb_client--;
+			nb_slot--;
+			std::cout << "We have " << nb_slot << "/" << MAX_CLIENT << "slot "<< std::endl;
+		    }
+		    else if (s_recv == -1)
+			continue ;/* = pas de données reçu ( mode non bloquant de recv)*/
+		    FD_CLR(j, &current_socket);
 		}
 	    }
 	}

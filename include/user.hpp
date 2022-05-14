@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <string>
+#include <ctime>
 
 class	User
 {
@@ -19,7 +20,13 @@ class	User
 	    int	getSocket(void);
 	    sockaddr_in	&getAddr(void);
 	    void    clear(void);
+	    void    chooseCMD(char *buffer);
+	    void    welcomeNewUser(void);
 
+	    void    commandCAP(std::string &buffer);
+	    void    commandNICK(std::string &buffer);
+	    void    commandUSER(std::string &buffer);
+	    time_t  ping(void);
 	    User    &operator=(const User &cp);
     private:
 	    int	socket;
