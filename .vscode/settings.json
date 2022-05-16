@@ -69,6 +69,10 @@
         "numeric": "cpp",
         "random": "cpp",
         "fstream": "cpp",
-        "ranges": "cpp"
+        "ranges": "cpp",
+        "__tree": "cpp",
+        "map": "cpp",
+        "iomanip": "cpp",
+        "stack": "cpp"
     }
 }

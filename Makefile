@@ -16,7 +16,8 @@ NAME_S	=	server
 NAME_C = 	client
 
 SRCS	:=	server.cpp \
-		user.cpp \
+			user.cpp \
+			Channel.cpp \
 
 HEAD	:=	include/server.hpp \
 		include/user.hpp \

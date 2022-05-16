@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: flmastor <flmastor@student.42.fr>          +#+  +:+       +#+        */
+/*   By: florianmastorakis <florianmastorakis@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/28 18:05:43 by florianmast       #+#    #+#             */
-/*   Updated: 2022/05/04 11:46:07 by flmastor         ###   ########.fr       */
+/*   Updated: 2022/05/16 18:10:11 by florianmast      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@
 //https://ocamil.com/index.php/c-c/c-c-les-sockets
 
 #define SOCKET_ERROR -1
-#define PORT 6667 //Attention tentative sur port 22 et c'est le ssh, le 23 permet une initiation de communication tcp (udp = 25)
+#define PORT 5666 //Attention tentative sur port 22 et c'est le ssh, le 23 permet une initiation de communication tcp (udp = 25)
 #define MAX_CLIENT 3
 
 int main(void)
@@ -57,7 +57,6 @@ int main(void)
     int                     bufsize = 100;
     char                    buffer[bufsize];
  //   bool                    isExit = false;
-    int                     clientCount = 1;
     
 
     
@@ -162,7 +161,7 @@ int main(void)
         std::cout << "Error listen" << std::endl;
         exit(EXIT_FAILURE);
     } 
-    std::cout << "Please wait, the client is connecting to the port:" << PORT << std::endl;
+    std::cout << "Listen function has operated well on port :" << PORT << std::endl;
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 //                                                                                   SET TOUTES LES SOCKETS EN INVALIDES (-1)                                                                               |
@@ -207,9 +206,8 @@ int main(void)
         {
             
             strcpy(buffer, "=> Server connected...\n");
-            std::cout << "=> Connected with the client #" << clientCount << ", you are good to go..." << std::endl;
-            std::cout << "\n=> Enter # to end the connection\n" << std::endl;
-             std::cout << "Client: ";
+            std::cout << "\n=> Please enter : CTRL + C to switch off the server\n" << std::endl;
+            std::cout << "Client: ";
             start = false;
         }
 	
@@ -249,9 +247,10 @@ int main(void)
 			{
 			    /*on trouve une place pour le client*/
 			    user_tab.insert(std::pair<int, User>(new_user.getSocket(), new_user));
+                new_user.welcomeNewUser();
 			    nb_slot++;
 			    FD_SET(new_user.getSocket(), &current_socket);
-			    std::cout << "Accepted, we have " << nb_slot << "/" << MAX_CLIENT << "slot "<< std::endl;
+			    std::cout << GREEN << "Serveur info: " << "Accepted, we have " << nb_slot << "/" << MAX_CLIENT << "slot " << NORMAL << std::endl;
 			}
 			/*si il n'y a plus de place ( normalement il doit y en avoir puisqu'on à vérifier que nb_client < MAX_CLIENT )*/
 			else
@@ -266,9 +265,7 @@ int main(void)
 		    s_recv = recv(j, buffer, 100, MSG_DONTWAIT);
 		    if (s_recv != -1 && s_recv)
 		    {
-		        /*tout c'est bien passer*/
-		        std::cout << inet_ntoa(user_tab[j].getAddr().sin_addr) << " csock: " << j << " send :" << buffer << std::endl;
-		       //  printf("%s (csock : %d) : envoit : «%s»\n",inet_ntoa(csin[i].sin_addr),csock[i],buf);
+		    //std::cout << inet_ntoa(user_tab[j].getAddr().sin_addr) << " client has sent: " << buffer << std::endl;
 			 /*Parsing de la commande*/
 			user_tab[j].chooseCMD(buffer);
 		    }
@@ -293,75 +290,6 @@ int main(void)
 	    }
 	}
     }
-
-            /*while (1)
-            {
-                recv(client, buffer, bufsize, 0);
-                std::cout << buffer << " ";
-                if (*buffer == '#') {
-                    *buffer = '*';
-                    isExit = true;
-                }
-                if (*buffer == '*')
-                    break;
-                else
-                    continue;
-            }
-            if (isExit == true)
-                break;
-        }*/
-        
-        /*
-        mettre gestion du temps avec usleep() si posix ou sleep() si windows
-        */  
-        
-           /* while (1)
-            {
-                recv(server, buffer, bufsize, 0);
-                std::cout << buffer << " ";
-                if (*buffer == '#') {
-                    *buffer = '*';
-                    isExit = true;
-                }
-                if (*buffer == '*')
-                    break;
-            }
-            if (isExit == true)
-                break;
-    
-            while (!isExit)
-            {
-               std::cout << "\nServer: ";
-                while (1)
-                {
-                    std::cin >> buffer;
-                    send(server, buffer, bufsize, 0);
-                    if (*buffer == '#') {
-                        send(server, buffer, bufsize, 0);
-                        *buffer = '*';
-                        isExit = true;
-                    }
-                    if (*buffer == '*')
-                        break;
-                } 
-                if (isExit == true)
-                break;
-                std::cout << "Client: ";
-                while (1)
-                {
-                    recv(server, buffer, bufsize, 0);
-                    std::cout << buffer << " ";
-                    if (*buffer == '#')
-                    {
-                        *buffer = '*';
-                        isExit = true;
-                    }
-                    if (*buffer == '*')
-                        break;
-                } 
-                if (isExit == true)
-                break;
-            } */
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 //                                                                                         FERMETURE DE CONNEXION                                                                                           |

@@ -6,7 +6,7 @@
 /*   By: florianmastorakis <florianmastorakis@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/29 11:33:22 by florianmast       #+#    #+#             */
-/*   Updated: 2022/04/30 16:26:15 by florianmast      ###   ########.fr       */
+/*   Updated: 2022/05/16 17:49:59 by florianmast      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,5 +27,6 @@
     struct   in_addr    sin_addr;       // Adresse ip qui sera given au serveur pour le reveler = htonl
     char                sin_zero[8];    // not used 
 };*/
+
 
 #endif
