@@ -1,8 +1,8 @@
 #ifndef USER_HPP
 #define USER_HPP
 
-#include <netinet/in.h>
-#include <sys/types.h>
+# include <netinet/in.h>
+# include <sys/types.h>
 # include <sys/socket.h>
 # include <arpa/inet.h>
 # include <unistd.h>

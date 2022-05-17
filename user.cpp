@@ -1,6 +1,8 @@
 #include "include/user.hpp"
 #include <iomanip>
 #include <sstream>
+#include <string.h>
+#include <errno.h>
 
 User::User(void) : socket(-1) {}
 
