@@ -225,11 +225,13 @@ int main(void)
 
 	ready_socket = current_socket;
 	errno = 0;
+	std::cout << "A" << std::endl;
 	if (select(1024, &ready_socket, NULL, NULL, NULL) < 0)
 	{
 	    std::cout << "Error, select failed " << strerror(errno) << std::endl;
 	    exit(EXIT_FAILURE);
 	}
+	std::cout << "B" << std::endl;
 	for (int j = 0; j < 1024; j++)
 	{
 	    if (FD_ISSET(j, &ready_socket))
@@ -247,7 +249,6 @@ int main(void)
 			{
 			    /*on trouve une place pour le client*/
 			    user_tab.insert(std::pair<int, User>(new_user.getSocket(), new_user));
-                new_user.welcomeNewUser();
 			    nb_slot++;
 			    FD_SET(new_user.getSocket(), &current_socket);
 			    std::cout << GREEN << "Serveur info: " << "Accepted, we have " << nb_slot << "/" << MAX_CLIENT << "slot " << NORMAL << std::endl;
@@ -282,10 +283,10 @@ int main(void)
 			nb_client--;
 			nb_slot--;
 			std::cout << "We have " << nb_slot << "/" << MAX_CLIENT << "slot "<< std::endl;
+			FD_CLR(j, &current_socket);
 		    }
 		    else if (s_recv == -1)
 			continue ;/* = pas de données reçu ( mode non bloquant de recv)*/
-		    FD_CLR(j, &current_socket);
 		}
 	    }
 	}
