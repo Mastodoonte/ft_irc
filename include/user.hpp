@@ -33,16 +33,28 @@ class	User
 	    void    commandUSER(std::string &buffer);
 		void	commandPASS(std::string &buffer);
 		void	commandMODE(std::string &buffer);
-	    time_t  ping(void);
+
+		bool    checkIfRegistred(void);
+		void	sendClient(const std::string &packet);
+		void	Registration(std::string packet);
+
 	    User    &operator=(const User &cp);
-    private:
-	    int	socket;
-	    sockaddr_in	addr;
-	    socklen_t	socket_len;
-	    
+		bool	caps;
+		bool	capsend;
+		bool	pass;
+		bool	nick;
+		bool	user;
+		bool	welcome;
+
 	    std::string  username;
 	    std::string  nickname;
 	    std::string  realname;
+		int	socket;
+			    
+    private:
+	    sockaddr_in	addr;
+	    socklen_t	socket_len;
+	    
 };
 
 struct errorReturn : public std::exception

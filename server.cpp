@@ -211,17 +211,17 @@ int main(void)
             start = false;
         }
 	
-	//Tout les X temps je ping tout les utilisateurs
-	if (std::time(0) - now >= 100)
-	{
-	    std::map<int, User>::iterator begin = user_tab.begin();
+	//Tout les X temps je ping tout les utilisateurs (NON utile ici, le retour demande juste un PONG et pas d'infos supplementaires)
+	// if (std::time(0) - now >= 100)
+	// {
+	//     std::map<int, User>::iterator begin = user_tab.begin();
 
-	    while (begin != user_tab.end())
-	    {
-		now = begin->second.ping();	
-		begin++;
-	    }
-	}
+	//     while (begin != user_tab.end())
+	//     {
+	// 	//now = begin->second.ping();	
+	// 	begin++;
+	//     }
+	// }
 
 	ready_socket = current_socket;
 	errno = 0;

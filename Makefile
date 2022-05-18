@@ -18,9 +18,11 @@ NAME_C = 	client
 SRCS	:=	server.cpp \
 			user.cpp \
 			Channel.cpp \
+			rpl.cpp
 
 HEAD	:=	include/server.hpp \
 		include/user.hpp \
+		include/rpl.hpp \
 			
 
 CLIENT_SRC = client.cpp

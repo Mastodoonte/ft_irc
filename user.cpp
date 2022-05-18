@@ -1,10 +1,11 @@
 #include "include/user.hpp"
+#include "include/rpl.hpp"
 #include <iomanip>
 #include <sstream>
 #include <string.h>
 #include <errno.h>
 
-User::User(void) : socket(-1) {}
+User::User(void) : caps(false), capsend(false), pass(false), nick(false), user(false), welcome(false), socket(-1) {}
 
 User::~User(void) {
 }
@@ -34,6 +35,7 @@ int	User::acceptUsr(int server_socket) {
 //Lors de la connection le client envoi 3 commande
 //dans un seul buffer, donc dès qu'une commande
 //a été éffectuer je la retire du buffer.
+
 static void eraseCMD(std::string &buffer) {
     int pos = 0;
 
@@ -45,6 +47,73 @@ static void eraseCMD(std::string &buffer) {
 	buffer.erase(0, buffer.size());
 }
 
+void	User::sendClient(const std::string &packet)
+{
+	std::string output(packet + "\r\n");
+	std::cout << "-> " << packet << std::endl;
+
+	if (send(socket, output.c_str(), output.length(), 0) == -1)
+		throw errorReturn(strerror(errno));
+}
+
+void	User::Registration(std::string packet)
+{
+    std::cout << "on arrive bien la \n";
+    std::cout << "Value = " << packet << "\n";
+    if (!packet.compare(0, 6, "CAP LS"))
+	{
+		sendClient("CAP * LS :");
+		caps = true;
+        eraseCMD(packet);
+		return ;
+	}
+	if(!packet.compare(0, 6, "CAP END"))
+	{
+		capsend = true;
+		return ;
+	}
+
+	if (!packet.compare(0, 4, "NICK"))
+	{
+		commandNICK(packet);
+		nick = true;
+        eraseCMD(packet);
+		return ;
+	}
+	
+	else if (!packet.compare(0, 4, "PASS"))
+	{
+		if (packet.size() < 2)
+			throw errorReturn(strerror(errno));
+		pass = true;
+        eraseCMD(packet);
+		return ;
+	}
+    
+     if (!packet.compare(0, 4, "USER"))
+	{
+		if (packet.size() < 4)
+			throw errorReturn(strerror(errno));
+		user = true;
+        eraseCMD(packet);
+		return ;
+	}
+	errorReturn(strerror(errno));
+}
+
+bool     User::checkIfRegistred(void)
+{
+    if (caps == false)
+        return (false);
+    if (pass == false)
+        return (false);
+    if (nick == false)
+		return (false);
+	if (user == false)
+		return (false);
+    return (true);
+}
+
 //Je choisi la bonne commande a call
 void	User::chooseCMD(char *buffer)
 {
@@ -52,37 +121,58 @@ void	User::chooseCMD(char *buffer)
     std::cout << RED  << "Packet received from client: " << buffer << NORMAL << std::endl;
     while (str_buffer.size())
     {
-	if (!str_buffer.compare(0, 3, "CAP"))
-	{
-	    commandCAP(str_buffer);
-	    eraseCMD(str_buffer);
-	}
-	else if (!str_buffer.compare(0, 4, "NICK"))
-	{
-	    commandNICK(str_buffer);
-	    eraseCMD(str_buffer);
-	}
-	else if (!str_buffer.compare(0, 4, "USER"))
-	{
-	    commandUSER(str_buffer);
-	    eraseCMD(str_buffer);
-	}
-	else if (!str_buffer.compare(0, 4, "PONG"))
-	{
-	    eraseCMD(str_buffer);
-	}
-    else if (!str_buffer.compare(0, 4, "PASS"))
-	{
-	    commandPASS(str_buffer);
-	    eraseCMD(str_buffer);
-	}
-    else if (!str_buffer.compare(0, 4, "MODE"))
-	{
-	    commandMODE(str_buffer);
-	    eraseCMD(str_buffer);
-	}
-	else
-	    std::cout << "Unknown command: " << str_buffer << std::endl;
+        if (!str_buffer.compare(0, 4, "PING"))
+		    return (PING(this, str_buffer));
+	    if (checkIfRegistred() == false && welcome == false)
+	    {
+	    	Registration(str_buffer);
+	    	if (caps == false)
+	    		return ;
+	    	if (pass == false)
+	    		return ;
+	    	if (nick == false)
+	    		return ;
+	    	if (user == false)
+	    		return ;
+	    	welcome = true;
+	    	sendClient(RPL_WELCOME(this, "serveur_test"));
+	    	sendClient(RPL_YOURHOST(this));
+            eraseCMD(str_buffer);
+	    	return ;
+        }
+	    /*if (!str_buffer.compare(0, 3, "CAP"))
+	    {
+	        commandCAP(str_buffer);
+	        eraseCMD(str_buffer);
+	    }
+	    else if (!str_buffer.compare(0, 4, "NICK"))
+	    {
+	        commandNICK(str_buffer);
+	        eraseCMD(str_buffer);
+	    }
+	    else if (!str_buffer.compare(0, 4, "USER"))
+	    {
+	        commandUSER(str_buffer);
+	        eraseCMD(str_buffer);
+	    }
+	    else if (!str_buffer.compare(0, 4, "PONG"))
+	    {
+	        eraseCMD(str_buffer);
+	    }
+        else if (!str_buffer.compare(0, 4, "PASS"))
+	    {
+	        commandPASS(str_buffer);
+	        eraseCMD(str_buffer);
+	    }
+        else if (!str_buffer.compare(0, 4, "MODE"))
+	    {
+	        commandMODE(str_buffer);
+	        eraseCMD(str_buffer);
+	    }*/
+	    else
+        {
+	        std::cout << "Unknown command: " << str_buffer << std::endl;
+        }
     }
 }
 
@@ -97,20 +187,21 @@ void    send_to_client(int rpl_number, std::string reply, std::string nickname, 
         throw errorReturn(strerror(errno));
 }
 
-//Je créer le message de bienvenue
-void	User::welcomeNewUser(void) {
-    std::string RPL_WELCOME = "Welcome to the Internet Relay Network";
-    RPL_WELCOME += nickname + "!" + username + "@127.0.0.1\n";
-    std::string RPL_YOURHOST = "Your host is FT_IRC, running version 1.0\n";
-    std::string RPL_CREATED = "This server was created <date>\n";
-    std::string RPL_MYINFO = "FT_IRC 1.0 0 0\n";
-
-    send_to_client(001,RPL_WELCOME.c_str(), nickname, socket );
-    send_to_client(002,RPL_YOURHOST.c_str(), nickname, socket );
-    send_to_client(003,RPL_CREATED.c_str(), nickname, socket );
-    send_to_client(004,RPL_MYINFO.c_str(), nickname, socket );
+int	User::getSocket(void) {
+ return (socket);
 }
 
+void	User::clear(void) {
+    close(socket);
+}
+
+sockaddr_in	&User::getAddr(void) {
+    return (addr);
+}
+
+//////////////////////////////////////////////
+/*                  Commands                */
+//////////////////////////////////////////////
 void	User::commandCAP(std::string &buffer)
 {
     (void)buffer;
@@ -149,30 +240,9 @@ void	User::commandUSER(std::string &buffer) {
 void	User::commandPASS(std::string &buffer)
 {
     (void)buffer;
-	//welcomeNewUser();
 }
 
 void	User::commandMODE(std::string &buffer)
 {
     (void)buffer;
-	//welcomeNewUser();
-}
-
-time_t	User::ping(void) {
-    std::string msg = "PING " + nickname;
-
-    send(socket, msg.c_str(), msg.size(), 0);
-    return (std::time(0));
-}
-
-int	User::getSocket(void) {
- return (socket);
-}
-
-void	User::clear(void) {
-    close(socket);
-}
-
-sockaddr_in	&User::getAddr(void) {
-    return (addr);
 }
