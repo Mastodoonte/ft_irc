@@ -4,10 +4,10 @@
 
  void	sendClient(const User *client, const std::string packet)
 {
-	std::string output(packet + "\r\n");
+	//std::string output(packet + "\r\n");
 	std::cout  << BLUE<< "-> " << packet << NORMAL;
 
-	if (send(client->socket, output.c_str(), output.length(), 0) == -1)
+	if (send(client->socket, packet.c_str(), packet.length(), 0) == -1)
 		throw errorReturn(strerror(errno));
 }
 
@@ -56,6 +56,6 @@ void	PING(const User* client, std::string packet)
     (void)client;
 	if (packet.size() < 2)
 		throw errorReturn(strerror(errno));
-	//sendClient(": PONG");
+	sendClient(client, ": PONG\r\n");
 }
 
