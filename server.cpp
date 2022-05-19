@@ -251,11 +251,11 @@ int main(void)
 			    user_tab.insert(std::pair<int, User>(new_user.getSocket(), new_user));
 			    nb_slot++;
 			    FD_SET(new_user.getSocket(), &current_socket);
-			    std::cout << GREEN << "Serveur info: " << "Accepted, we have " << nb_slot << "/" << MAX_CLIENT << "slot " << NORMAL << std::endl;
+			    std::cout << GREEN << "#   Serveur info: " << "Accepted, we have " << nb_slot << "/" << MAX_CLIENT << "slot " << NORMAL << std::endl;
 			}
 			/*si il n'y a plus de place ( normalement il doit y en avoir puisqu'on à vérifier que nb_client < MAX_CLIENT )*/
 			else
-			    std::cout << "Refused" <<  nb_slot << "/" << MAX_CLIENT << "slot "<< std::endl;
+			    std::cout << "#   Refused" <<  nb_slot << "/" << MAX_CLIENT << "slot "<< std::endl;
 		    }
 		}
 		else
@@ -266,24 +266,21 @@ int main(void)
 		    s_recv = recv(j, buffer, 100, MSG_DONTWAIT);
 		    if (s_recv != -1 && s_recv)
 		    {
-		        //std::cout << inet_ntoa(user_tab[j].getAddr().sin_addr) << " client has sent: " << buffer << std::endl;
 			     /*Parsing de la commande*/
-         
 			    user_tab[j].chooseCMD(buffer);
 		    }
 		    else if (s_recv == 0)
 		    {
 			    /*si la taille reçu égale à 0 : déconnection */
-			    std::cout << inet_ntoa(user_tab[j].getAddr().sin_addr) << " csock: " << j << "disconected " << std::endl;
-
-			    // printf("%s (csock : %d) : déconnection\n",inet_ntoa(csin[i].sin_addr),csock[i]);
+			    std::cout << GREEN << "#   " <<inet_ntoa(user_tab[j].getAddr().sin_addr) << " csock: " 
+                    << j << "disconected " << NORMAL << std::endl;
 			    /*on ferme la socket*/
 			    user_tab[j].clear();
 			    user_tab.erase(j);
 			    /*on libère une place de client*/
 			    nb_client--;
 			    nb_slot--;
-			    std::cout << "We have " << nb_slot << "/" << MAX_CLIENT << "slot "<< std::endl;
+			    std::cout << GREEN << "# " << "We have " << nb_slot << "/" << MAX_CLIENT << "slot "<< std::endl;
 			    FD_CLR(j, &current_socket);
 		    }
 		    else if (s_recv == -1)
@@ -303,8 +300,8 @@ int main(void)
      * @param  socket  On a besoin du socket pour close la connection
      * */
 //https://stackoverflow.com/questions/4160347/close-vs-shutdown-socket (tres interessant sur le choix de close ou shutdown, better close())
-    std::cout << "Close the socket client" << std::endl;
+    std::cout << GREEN << "#   " << "Close the socket client" << NORMAL << std::endl;
     close(server_socket);
-    std::cout << "Server closing is done" << std::endl; 
+    std::cout << GREEN << "#   "<< "Server closing is done" << NORMAL << std::endl; 
     return EXIT_SUCCESS;
 }

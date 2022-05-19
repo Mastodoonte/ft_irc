@@ -28,7 +28,7 @@ int	User::acceptUsr(int server_socket)
 		std::cout << "Error to accept client" << std::endl;
 		return (-1);
     }
-    std::cout <<GREEN << "Serveur info: Un nouveau client tente de se connecter : " << inet_ntoa(addr.sin_addr) << " Avec pour socket : " << socket << NORMAL << std::endl;
+    std::cout <<GREEN << "#   Serveur info: Un nouveau client tente de se connecter : " << inet_ntoa(addr.sin_addr) << " Avec pour socket : " << socket << NORMAL << std::endl;
     return (0);
 }
 
@@ -66,7 +66,7 @@ static void eraseCMD(std::string *buffer) {
  void	User::sendClient(const std::string packet)
 {
 	std::string output(packet + "\r\n");
-	std::cout  << BLUE<< "-> " << packet << NORMAL;
+	std::cout  << BLUE << "-> " << packet << NORMAL;
 
 	if (send(socket, output.c_str(), output.length(), 0) == -1)
 		throw errorReturn(strerror(errno));
@@ -81,6 +81,7 @@ void	User::Registration(std::string packet)
 		output += SERVER_NAME;
 		output += " 421 * CAP";
 		sendClient( output);
+		std::cout << "\n";
 		caps = true;
         eraseCMD(&str_buffer);
 		return ;
@@ -145,7 +146,7 @@ void	User::chooseCMD(char *buffer)
 			displayCmd(str_buffer);
     	    if (!str_buffer.compare(0, 4, "PING"))
 			{
-			    return (PING(this, str_buffer));
+			    return (RPL_PING(this, str_buffer));
 			}
 		    if (checkIfRegistred() == false && welcome == false)
 		    {
@@ -172,30 +173,12 @@ void	User::chooseCMD(char *buffer)
 		        commandMODE(str_buffer);
 		         eraseCMD(&str_buffer);
 		    }
-		    /*if (!str_buffer.compare(0, 3, "CAP"))
-		    {
-		        commandCAP(str_buffer);
-		        // eraseCMD(str_buffer);
-		    }
 		    else if (!str_buffer.compare(0, 4, "NICK"))
 		    {
 		        commandNICK(str_buffer);
-		        // eraseCMD(str_buffer);
+		         eraseCMD(&str_buffer);
 		    }
-		    else if (!str_buffer.compare(0, 4, "USER"))
-		    {
-		        commandUSER(str_buffer);
-		        // eraseCMD(str_buffer);
-		    }
-		    else if (!str_buffer.compare(0, 4, "PONG"))
-		    {
-		        // eraseCMD(str_buffer);
-		    }
-    	    else if (!str_buffer.compare(0, 4, "PASS"))
-		    {
-		        commandPASS(str_buffer);
-		        // eraseCMD(str_buffer);
-		    }*/
+
 		    else
     	    {
 		        std::cout << "Unknown command: " << str_buffer << std::endl;
@@ -206,36 +189,9 @@ void	User::chooseCMD(char *buffer)
 
 }
 
-/*static void    send_to_client(int rpl_number, std::string reply, std::string nickname, int socket)
-{
-	std::ostringstream packet;
-
-	packet	<< ":irc_serv "<< std::setfill('0') << std::setw(3) << rpl_number<< " " << nickname << " " << reply;
-	std::string msg = packet.str();
-	std::cout << BLUE << "Packet send to the client: " << "msg = "<< msg << NORMAL;
-	if ( send(socket, &msg[0], msg.size(), 0) == -1 )
-        throw errorReturn(strerror(errno));
-}
-*/
-int	User::getSocket(void) {
- return (socket);
-}
-
-void	User::clear(void) {
-    close(socket);
-}
-
-sockaddr_in	&User::getAddr(void) {
-    return (addr);
-}
-
 //////////////////////////////////////////////
 /*                  Commands                */
 //////////////////////////////////////////////
-void	User::commandCAP(std::string &buffer)
-{
-    (void)buffer;
-}
 
 void	User::commandNICK(std::string &buffer)
 {
@@ -247,7 +203,6 @@ void	User::commandNICK(std::string &buffer)
     pos1 = buffer.find(' ') + 1;
     pos2 = buffer.find('\n');
     nickname = buffer.substr(pos1, pos2 - pos1);
-	//sendClient("nick");
     std::cout << GREEN  << "#   Serveur info: " << "Socket number# " <<getSocket() << " set nickname to " << nickname << NORMAL << std::endl;
 }
 
@@ -263,7 +218,7 @@ void	User::commandUSER(std::string &buffer) {
     username = buffer.substr(pos1, pos2 - pos1);
     pos1 = buffer.find(':') + 1;
     realname = buffer.substr(pos1, buffer.size() - pos1);
-    std::cout << GREEN << "Serveur info: " << "Socket number# " <<getSocket() << " set Username to " << username << NORMAL << std::endl;
+    std::cout << GREEN << "#   Serveur info: " << "Socket number# " <<getSocket() << " set Username to " << username << NORMAL << std::endl;
 }
 
 void	User::commandPASS(std::string &buffer)
@@ -280,6 +235,17 @@ void	User::commandMODE(std::string &buffer)
 	pos1 = buffer.find(' ') + 1;
     pos2 = buffer.find('\n');
     std::string mode = buffer.substr(pos1, pos2 - pos1);
-	//mode += "+i ";
-  //  sendClient(this, mode);//: :opacaud MODE opacaud :+i
+	sendClient( RPL_MODE(this, SERVER_NAME));
 }
+
+/*
+  <=======]}======
+    --.   /|
+   _\"/_.'/
+ .'._._,.'
+ :/ \{}/
+(L  /--',----._
+    |          \\
+   : /-\ .'-'\ / |
+--> \\, ||    \|
+     \/ ||    ||*/

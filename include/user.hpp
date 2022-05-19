@@ -24,9 +24,10 @@ class	User
 	    ~User(void);
 
 	    int acceptUsr(int	server_socket);
-	    int	getSocket(void);
-	    sockaddr_in	&getAddr(void);
-	    void    clear(void);
+	    int	getSocket(void) {return (socket);}
+		std::string getNickname(void) {return (nickname);} const
+	    sockaddr_in	&getAddr(void){return (addr);}
+	    void    clear(void) {close(socket);}
 	    void    chooseCMD(char *buffer);
 	    void    welcomeNewUser(void);
 
