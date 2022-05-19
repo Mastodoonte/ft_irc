@@ -1,26 +1,46 @@
 #include "include/rpl.hpp"
+//#include "user.cpp"
+#include <bits/stdc++.h>
 
-std::string	RPL_YOURHOST(const User* client)
+ void	sendClient(const User *client, const std::string packet)
 {
-    (void)client;
-    return (NULL);
+	std::string output(packet + "\r\n");
+	std::cout  << BLUE<< "-> " << packet << NORMAL;
+
+	if (send(client->socket, output.c_str(), output.length(), 0) == -1)
+		throw errorReturn(strerror(errno));
 }
 
 std::string	RPL_WELCOME(const User* client, const std::string& network)
 {
+    std::string RPL_WELCOME = ":serveur_test 001 flmastor :Welcome to the Internet Relay Network, flmastor!flmastor@localhost\r\n";
+    (void)network;
     (void)client;
-    (void) network;
-        std::string RPL_WELCOME = ":127.0.0.1 001 Welcome to the Internet Relay Network";
-//   RPL_WELCOME += nickname + "!" + username + "@127.0.0.1\n";
-////    std::string RPL_YOURHOST = "Your host is FT_IRC, running version 1.0\n";
- //   std::string RPL_CREATED = "This server was created <date>\n";
- ////   std::string RPL_MYINFO = "FT_IRC 1.0 0 0\n";
+    return (RPL_WELCOME);
+}
 
-  /*  send_to_client(001,RPL_WELCOME.c_str(), nickname, socket );
-    send_to_client(002,RPL_YOURHOST.c_str(), nickname, socket );
-    send_to_client(003,RPL_CREATED.c_str(), nickname, socket );
-    send_to_client(004,RPL_MYINFO.c_str(), nickname, socket );*/
-    return (NULL);
+std::string	RPL_YOURHOST(const User* client, const std::string& network)
+{
+    std::string RPL_YOURHOST = ":serveur_test 002 flmastor :Your host is Test_serveur, running version beta\r\n";
+    (void)network;
+    (void)client;
+    return (RPL_YOURHOST);
+}
+
+std::string	RPL_CREATED(const User* client, const std::string& network)
+{
+    std::string RPL_YOURHOST = ":serveur_test 003 flmastor :This server was created <today>\r\n";
+    (void)network;
+    (void)client;
+    return (RPL_YOURHOST);
+}
+
+std::string	RPL_MYINFO(const User* client, const std::string& network)
+{
+    std::string RPL_YOURHOST = ":serveur_test 004 flmastor Test_serveur beta aiwro oitklbI\r\n";
+    (void)network;
+    (void)client;
+    return (RPL_YOURHOST);
 }
 
 std::string	ERR_NEEDMOREPARAMS(const User* client, const std::string packet)
@@ -33,12 +53,9 @@ std::string	ERR_NEEDMOREPARAMS(const User* client, const std::string packet)
 
 void	PING(const User* client, std::string packet)
 {
+    (void)client;
 	if (packet.size() < 2)
 		throw errorReturn(strerror(errno));
-	std::string line = ("PONG\r\n");
-	std::cout << "-> " << packet << std::endl;
-
-	if (send(client->socket, line.c_str(), line.length(), 0) == -1)
-		throw errorReturn(strerror(errno));
+	//sendClient(": PONG");
 }
 

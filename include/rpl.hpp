@@ -6,9 +6,15 @@
 # include <iostream>
 #include "user.hpp"
 
+ //void	sendClient(const User *client, const std::string packet);
+
 std::string	RPL_YOURHOST(const User* client);
 std::string	RPL_WELCOME(const User* client, const std::string& network);
+std::string	RPL_YOURHOST(const User* client, const std::string& network);
+std::string	RPL_CREATED(const User* client, const std::string& network);
+
 std::string	ERR_NEEDMOREPARAMS(const User* client, const std::string packet);
-void	PING(const User* client,std::string packet);
+
+void	    PING(const User* client,std::string packet);
 
 #endif

@@ -14,9 +14,9 @@
 #include "include/user.hpp"
 #include <unistd.h>
 #include <string.h>
-#include <cstdlib> 
-#include <fcntl.h>
+#include <cstdlib>
 #include <stdlib.h>
+#include <fcntl.h>
 #include <cerrno>
 #include <iostream>
 #include <ctime>
@@ -195,7 +195,7 @@ int main(void)
     time_t  now;
     //isExit = false;
    // while (isExit == false)
-
+       
     now = std::time(0);
     fd_set current_socket, ready_socket;
     FD_ZERO(&current_socket);
@@ -266,24 +266,25 @@ int main(void)
 		    s_recv = recv(j, buffer, 100, MSG_DONTWAIT);
 		    if (s_recv != -1 && s_recv)
 		    {
-		    //std::cout << inet_ntoa(user_tab[j].getAddr().sin_addr) << " client has sent: " << buffer << std::endl;
-			 /*Parsing de la commande*/
-			user_tab[j].chooseCMD(buffer);
+		        //std::cout << inet_ntoa(user_tab[j].getAddr().sin_addr) << " client has sent: " << buffer << std::endl;
+			     /*Parsing de la commande*/
+         
+			    user_tab[j].chooseCMD(buffer);
 		    }
 		    else if (s_recv == 0)
 		    {
-			/*si la taille reçu égale à 0 : déconnection */
-			std::cout << inet_ntoa(user_tab[j].getAddr().sin_addr) << " csock: " << j << "disconected " << std::endl;
-                    
-			// printf("%s (csock : %d) : déconnection\n",inet_ntoa(csin[i].sin_addr),csock[i]);
-			/*on ferme la socket*/
-			user_tab[j].clear();
-			user_tab.erase(j);
-			/*on libère une place de client*/
-			nb_client--;
-			nb_slot--;
-			std::cout << "We have " << nb_slot << "/" << MAX_CLIENT << "slot "<< std::endl;
-			FD_CLR(j, &current_socket);
+			    /*si la taille reçu égale à 0 : déconnection */
+			    std::cout << inet_ntoa(user_tab[j].getAddr().sin_addr) << " csock: " << j << "disconected " << std::endl;
+
+			    // printf("%s (csock : %d) : déconnection\n",inet_ntoa(csin[i].sin_addr),csock[i]);
+			    /*on ferme la socket*/
+			    user_tab[j].clear();
+			    user_tab.erase(j);
+			    /*on libère une place de client*/
+			    nb_client--;
+			    nb_slot--;
+			    std::cout << "We have " << nb_slot << "/" << MAX_CLIENT << "slot "<< std::endl;
+			    FD_CLR(j, &current_socket);
 		    }
 		    else if (s_recv == -1)
 			continue ;/* = pas de données reçu ( mode non bloquant de recv)*/

@@ -9,6 +9,8 @@
 # include <iostream>
 # include <string>
 # include <ctime>
+#include <cstdlib>
+#include <stdlib.h>
 # define NORMAL       "\033[0m"
 # define RED         "\033[31m"            
 # define GREEN       "\033[32m"   
@@ -35,7 +37,7 @@ class	User
 		void	commandMODE(std::string &buffer);
 
 		bool    checkIfRegistred(void);
-		void	sendClient(const std::string &packet);
+		void	sendClient(const std::string packet);
 		void	Registration(std::string packet);
 
 	    User    &operator=(const User &cp);
@@ -49,6 +51,7 @@ class	User
 	    std::string  username;
 	    std::string  nickname;
 	    std::string  realname;
+		std::string	 str_buffer;
 		int	socket;
 			    
     private:
