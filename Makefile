@@ -15,7 +15,8 @@ PRINT_INTERLINE_N = printf '$(YELLOW)$(BOLD)====================================
 NAME_S	=	server
 NAME_C = 	client
 
-SRCS	:=	server.cpp \
+SRCS	:=	main.cpp \
+			server.cpp \
 			user.cpp \
 			Channel.cpp \
 			rpl.cpp

@@ -6,7 +6,7 @@
 /*   By: florianmastorakis <florianmastorakis@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/29 11:33:22 by florianmast       #+#    #+#             */
-/*   Updated: 2022/05/16 17:49:59 by florianmast      ###   ########.fr       */
+/*   Updated: 2022/05/20 15:10:19 by florianmast      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,14 +19,17 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <iostream>
+#define MAX_CLIENT 10
 
-/*struct sockaddr_in
+struct global
 {
-    short               sin_family;     // Toujours égale à AF_INET il identifi le format de data suivis
-    unsigned short      sin_port;       // value de htons avec le port utilisé
-    struct   in_addr    sin_addr;       // Adresse ip qui sera given au serveur pour le reveler = htonl
-    char                sin_zero[8];    // not used 
-};*/
+    int port;
+    int password;
+};
 
+void    socketInitialisation(int *server_socket);
+int     settingsAndConnection(int *server_socket, int sock_err, struct sockaddr_in *sin, global *global);
+void    listenUsers(int *sock_err, int *server_socket, int nb_client, global *global);
+void    loopServer(int server_socket);
 
 #endif
