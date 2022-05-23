@@ -1,5 +1,8 @@
 #include "include/user.hpp"
 #include "include/rpl.hpp"
+#include "include/server.hpp"
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <iomanip>
 #include <sstream>
 #include <string.h>
@@ -35,6 +38,11 @@ int	User::acceptUsr(int server_socket)
     ipaddr = buffer;
     std::cout <<GREEN << "#   Serveur info: Un nouveau client tente de se connecter : " << inet_ntoa(addr.sin_addr) << " Avec pour socket : " << socket << NORMAL << std::endl;
     return (0);
+}
+
+std::map<std::string, Channel *> User::getChannels() const
+{
+    return (this->channels);
 }
 
 //Lors de la connection le client envoi 3 commande
@@ -142,7 +150,7 @@ bool     User::checkIfRegistred(void)
 }
 
 //Je choisi la bonne commande a call
-void	User::chooseCMD(char *buffer)
+void	User::chooseCMD(char *buffer, std::map<int, User>	user_tab, int j)
 {
     str_buffer = std::string(buffer);
     while (str_buffer.size())
@@ -186,14 +194,19 @@ void	User::chooseCMD(char *buffer)
 		    }
 		    else if (!str_buffer.compare(0, 4, "JOIN"))
 		    {
-			commandJOIN(str_buffer);
+			commandJOIN(str_buffer, user_tab, j);
 			eraseCMD(&str_buffer);
 		    }
 		    else if (!str_buffer.compare(0, 4, "USER"))
 		    {
-			commandUSER(str_buffer);
-			eraseCMD(&str_buffer);
+				commandUSER(str_buffer);
+				eraseCMD(&str_buffer);
 		    }
+			else if (!str_buffer.compare(0, 7,"PRIVMSG"))
+			{
+				commandPRIVMSG(str_buffer, user_tab, j);
+				eraseCMD(&str_buffer);
+			}
 		    else
     	    {
 		        std::cout << "Unknown command: " << str_buffer << std::endl;
@@ -291,7 +304,7 @@ static void JOINwelcome(User &usr, std::string chan_name) {
 
 }
 
-void	User::commandJOIN(std::string &buffer) {
+void	User::commandJOIN(std::string &buffer, std::map<int, User>	user_tab, int j) {
     std::vector<std::string> chan;
     std::vector<std::string> mode;
     std::string	tmp = buffer;
@@ -305,11 +318,10 @@ void	User::commandJOIN(std::string &buffer) {
     pos1 = pos2 + 1;
     pos2 = buffer.size();
     splitArg(mode, buffer.substr(pos1, pos2 - pos1));
-
     std::vector<std::string>::iterator it = chan.begin();
     while (it != chan.end())
     {
-	createOrJoin(channels, *it);
+	createOrJoin(channels, *it, user_tab, j);
 	if (!channels.find(*it)->second->namedCorrectly())
 	{
 	    channels.erase(*it);
@@ -318,6 +330,18 @@ void	User::commandJOIN(std::string &buffer) {
 	JOINwelcome(*this, *it);
 	++it;
     }
+}
+
+void	User::commandPRIVMSG(std::string &buffer, std::map<int, User>	user_tab, int j)
+{
+	std::map<std::string, Channel*>::iterator it = user_tab[j].channels.begin();
+
+	for (std::vector<t_client>::iterator it1 = it->second->_chan_clients.begin(); it1 != it->second->_chan_clients.end(); it1++)
+	{
+		std::string tmp = buffer + "\r\n";
+		if (j != it1->socket)
+			send(it1->socket, tmp.c_str(), tmp.size(), 0);
+	}
 }
 
 /*

@@ -10,14 +10,16 @@
 # include <string>
 # include <ctime>
 # include <map>
-#include <cstdlib>
-#include <stdlib.h>
-#include "Channel.hpp"
+# include <cstdlib>
+# include <stdlib.h>
+# include "Channel.hpp"
 # define NORMAL       "\033[0m"
 # define RED         "\033[31m"            
 # define GREEN       "\033[32m"   
 # define YELLOW      "\033[33m"
 # define BLUE        "\033[34m"
+
+class Channel;
 
 class	User
 {
@@ -30,7 +32,7 @@ class	User
 		std::string getNickname(void) {return (nickname);} const
 	    sockaddr_in	&getAddr(void){return (addr);}
 	    void    clear(void) {close(socket);}
-	    void    chooseCMD(char *buffer);
+	    void    chooseCMD(char *buffer, std::map<int, User>	user_tab, int j);
 	    void    welcomeNewUser(void);
 
 	    void    commandCAP(std::string &buffer);
@@ -38,7 +40,8 @@ class	User
 	    void    commandUSER(std::string &buffer);
 		void	commandPASS(std::string &buffer);
 		void	commandMODE(std::string &buffer);
-		void	commandJOIN(std::string &buffer);
+		void	commandJOIN(std::string &buffer, std::map<int, User>	user_tab, int j);
+		void	commandPRIVMSG(std::string &buffer, std::map<int, User>	user_tab, int j); 
 
 		bool    checkIfRegistred(void);
 		void	sendClient(const std::string packet);
@@ -58,11 +61,13 @@ class	User
 	    std::string	 ipaddr;
 		std::string	 str_buffer;
 		int	socket;
-			    
+
+		std::map<std::string, Channel *> getChannels() const;
+		static std::map<std::string, Channel*>    channels;
     private:
 	    sockaddr_in	addr;
 	    socklen_t	socket_len;
-	    static std::map<std::string, Channel*>    channels;
+	    //static std::map<std::string, Channel*>    channels;
 	    
 };
 

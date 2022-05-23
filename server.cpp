@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: florianmastorakis <florianmastorakis@st    +#+  +:+       +#+        */
+/*   By: fayel-ha <fayel-ha@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/28 18:05:43 by florianmast       #+#    #+#             */
-/*   Updated: 2022/05/20 15:15:22 by florianmast      ###   ########.fr       */
+/*   Updated: 2022/05/24 00:57:42 by fayel-ha         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -203,7 +203,13 @@ void          loopServer(int server_socket)
 	    	        if (s_recv != -1 && s_recv)
 	    	        {
 	    	    	     /*Parsing de la commande*/
-	    	    	    user_tab[j].chooseCMD(buffer);
+	    	    	    user_tab[j].chooseCMD(buffer, user_tab, j);
+                        for (std::map<std::string, Channel*>::iterator it = user_tab[j].channels.begin(); it != user_tab[j].channels.end(); it++)
+                        {
+                            std::cout << YELLOW << "Channel: " << it->second->_name << NORMAL << std::endl;
+                            for (std::vector<t_client>::iterator it1 = it->second->_chan_clients.begin(); it1 != it->second->_chan_clients.end(); it1++)
+                                std::cout << BLUE << "Il y a " << it1->nickname << " qui est present avec la socket : " << RED << it1->socket << NORMAL << std::endl;
+                        }
 	    	        }
 	    	        else if (s_recv == 0)
 	    	        {

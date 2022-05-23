@@ -1,5 +1,5 @@
 #include "include/Channel.hpp"
-
+#include "include/user.hpp"
 
 Channel::Channel(const std::string &src) : _name(src), _password(""), _isClosed(false)
 {
@@ -32,6 +32,10 @@ std::string Channel::getName(void) {
     return (_name);
 }
 
+std::vector<t_client>   Channel::getChanClient()
+{
+    return (_chan_clients);
+}
 /*
  * Channels names are strings (beginning with a '&', '#', '+' or '!'
  * character) of length up to fifty (50) characters.  Channel names are
@@ -79,16 +83,26 @@ bool Channel::namedCorrectly(void)
  * Here the objective is to create a channel and add it right into our map channels_list
  * if the channel doesn't exit, otherwise we return the pointer of the channel
  * */
-Channel *createOrJoin(std::map<std::string, Channel*> &channels_list, std::string chan_name)
+Channel *createOrJoin(std::map<std::string, Channel*> &channels_list, std::string chan_name, std::map<int, User>	user_tab, int j)
 {
     std::map<std::string, Channel*>::iterator it = channels_list.begin();
     while (it != channels_list.end())
     {
         if (it->first == chan_name)
+        {
+            t_client tmp1;
+            tmp1.socket = user_tab[j].socket;
+            tmp1.nickname = user_tab[j].nickname;
+            it->second->_chan_clients.push_back(tmp1);
             return (it->second);
+        }
         it++;
     }
     Channel *new_channel = new Channel(chan_name);
+    t_client tmp;
+    tmp.socket = user_tab[j].socket;
+    tmp.nickname = user_tab[j].nickname;
+    new_channel->_chan_clients.push_back(tmp);
     channels_list[chan_name] = new_channel;
     return new_channel;
 }
