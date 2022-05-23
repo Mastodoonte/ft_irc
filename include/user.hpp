@@ -9,8 +9,10 @@
 # include <iostream>
 # include <string>
 # include <ctime>
+# include <map>
 #include <cstdlib>
 #include <stdlib.h>
+#include "Channel.hpp"
 # define NORMAL       "\033[0m"
 # define RED         "\033[31m"            
 # define GREEN       "\033[32m"   
@@ -36,6 +38,7 @@ class	User
 	    void    commandUSER(std::string &buffer);
 		void	commandPASS(std::string &buffer);
 		void	commandMODE(std::string &buffer);
+		void	commandJOIN(std::string &buffer);
 
 		bool    checkIfRegistred(void);
 		void	sendClient(const std::string packet);
@@ -52,12 +55,14 @@ class	User
 	    std::string  username;
 	    std::string  nickname;
 	    std::string  realname;
+	    std::string	 ipaddr;
 		std::string	 str_buffer;
 		int	socket;
 			    
     private:
 	    sockaddr_in	addr;
 	    socklen_t	socket_len;
+	    static std::map<std::string, Channel*>    channels;
 	    
 };
 

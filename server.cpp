@@ -164,12 +164,10 @@ void          loopServer(int server_socket)
         }
 	    ready_socket = current_socket;
 	    errno = 0;
-	    std::cout << "A" << std::endl;
 	    if (select(1024, &ready_socket, NULL, NULL, NULL) < 0)
 	    {
             throw errorReturn("Error: select has failed");
 	    }
-	    std::cout << "B" << std::endl;
 	    for (int j = 0; j < 1024; j++)
 	    {
 	        if (FD_ISSET(j, &ready_socket))

@@ -15,9 +15,9 @@ class Channel
         Channel operator=(const Channel &src);
         ~Channel();
 
-        bool namedCorrectly(const std::string &chan_name);
+	std::string getName(void);
+        bool namedCorrectly(void);
         Channel *lookForJoin(std::map<std::string, Channel*> channels_list, std::string chan_name);
-        Channel *createOrJoin(std::map<std::string, Channel*> channels_list,  std::string chan_name);
 
         
     private:
@@ -33,5 +33,7 @@ class Channel
 
 
 };
+
+Channel *createOrJoin(std::map<std::string, Channel*> &channels_list,  std::string chan_name);
 
 #endif

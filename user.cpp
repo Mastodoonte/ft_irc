@@ -6,6 +6,8 @@
 #include <errno.h>
 #define SERVER_NAME "TEST_SERVEUR"
 
+std::map<std::string, Channel*>	    User::channels;
+
 User::User(void) : caps(false), capsend(false), pass(false), nick(false), user(false), welcome(false), socket(-1) {}
 
 User::~User(void) {
@@ -20,6 +22,7 @@ User	&User::operator=(const User &cp) {
 
 int	User::acceptUsr(int server_socket)
 {
+    char buffer[INET_ADDRSTRLEN];
 
     socket_len = sizeof(addr);
     socket = accept(server_socket, (struct sockaddr *)&addr, &socket_len);
@@ -28,6 +31,8 @@ int	User::acceptUsr(int server_socket)
 		std::cout << "Error to accept client" << std::endl;
 		return (-1);
     }
+    inet_ntop(AF_INET, &addr.sin_addr.s_addr, buffer, INET_ADDRSTRLEN);
+    ipaddr = buffer;
     std::cout <<GREEN << "#   Serveur info: Un nouveau client tente de se connecter : " << inet_ntoa(addr.sin_addr) << " Avec pour socket : " << socket << NORMAL << std::endl;
     return (0);
 }
@@ -115,6 +120,7 @@ void	User::Registration(std::string packet)
 		{
 			throw errorReturn(strerror(errno));
 		}
+		commandUSER(str_buffer);
 		user = true;
         eraseCMD(&str_buffer);
 		return ;
@@ -178,7 +184,16 @@ void	User::chooseCMD(char *buffer)
 		        commandNICK(str_buffer);
 		         eraseCMD(&str_buffer);
 		    }
-
+		    else if (!str_buffer.compare(0, 4, "JOIN"))
+		    {
+			commandJOIN(str_buffer);
+			eraseCMD(&str_buffer);
+		    }
+		    else if (!str_buffer.compare(0, 4, "USER"))
+		    {
+			commandUSER(str_buffer);
+			eraseCMD(&str_buffer);
+		    }
 		    else
     	    {
 		        std::cout << "Unknown command: " << str_buffer << std::endl;
@@ -199,9 +214,8 @@ void	User::commandNICK(std::string &buffer)
     int pos1 = 0;
     int pos2 = 0;
     
-    if (nickname == "" && username != "")
     pos1 = buffer.find(' ') + 1;
-    pos2 = buffer.find('\n');
+    pos2 = buffer.find('\r');
     nickname = buffer.substr(pos1, pos2 - pos1);
     std::cout << GREEN  << "#   Serveur info: " << "Socket number# " <<getSocket() << " set nickname to " << nickname << NORMAL << std::endl;
 }
@@ -209,10 +223,7 @@ void	User::commandNICK(std::string &buffer)
 void	User::commandUSER(std::string &buffer) {
     int pos1 = 0;
     int pos2 = 0;
-    int	welcome = 0;
 
-    if (username == "" && nickname != "")
-	welcome = 1;
     pos1 = buffer.find(' ') + 1;
     pos2 = buffer.find(' ', pos1);
     username = buffer.substr(pos1, pos2 - pos1);
@@ -236,6 +247,77 @@ void	User::commandMODE(std::string &buffer)
     pos2 = buffer.find('\n');
     std::string mode = buffer.substr(pos1, pos2 - pos1);
 	sendClient( RPL_MODE(this, SERVER_NAME));
+}
+
+static void splitArg(std::vector<std::string> &chan, std::string buffer) {
+    int pos = 0;
+
+    while (buffer.size())
+    {
+	pos = buffer.find(',');
+	if (pos == -1)
+	    pos = buffer.size();
+	chan.push_back(buffer.substr(0, pos));
+	buffer.erase(0, pos + 1);
+    }
+}
+
+static void JOINwelcome(User &usr, std::string chan_name) {
+
+    //JOIN message
+    std::string JOINmsg = usr.nickname.c_str();
+    JOINmsg += "!" + usr.username + "@" + usr.ipaddr;
+    JOINmsg += " JOIN " + chan_name + "\r\n";
+    usr.sendClient(JOINmsg);
+
+    //RPL_TOPIC
+    std::string RPL_TOPIC = "";
+    RPL_TOPIC += ":server_test 332 " + usr.nickname;
+    RPL_TOPIC += " " + chan_name + " :<topic>\r\n";
+    usr.sendClient(RPL_TOPIC);
+
+    //RPL_NAMERPL
+    std::string RPL_NAMERPL = "";
+    RPL_NAMERPL += ":server_test 353 " + usr.nickname;
+    RPL_NAMERPL += " = " + chan_name;
+    RPL_NAMERPL += " :" + usr.nickname + "\r\n";
+    usr.sendClient(RPL_NAMERPL);
+
+    //RPL_ENDOFNAMES
+    std::string RPL_ENDOFNAMES = "";
+    RPL_ENDOFNAMES += ":server_test 366 " + usr.nickname;
+    RPL_ENDOFNAMES += " " + chan_name + " :End of NAMES list\r\n";
+    usr.sendClient(RPL_ENDOFNAMES);
+
+}
+
+void	User::commandJOIN(std::string &buffer) {
+    std::vector<std::string> chan;
+    std::vector<std::string> mode;
+    std::string	tmp = buffer;
+    int pos1 = 0;
+    int pos2 = 0;
+
+    pos1 = buffer.find(' ') + 1;
+    pos2 = buffer.find(' ', pos1);
+    splitArg(chan, buffer.substr(pos1, pos2 - pos1));
+
+    pos1 = pos2 + 1;
+    pos2 = buffer.size();
+    splitArg(mode, buffer.substr(pos1, pos2 - pos1));
+
+    std::vector<std::string>::iterator it = chan.begin();
+    while (it != chan.end())
+    {
+	createOrJoin(channels, *it);
+	if (!channels.find(*it)->second->namedCorrectly())
+	{
+	    channels.erase(*it);
+	    std::cout << "Error: invalid argument" << std::endl;
+	}
+	JOINwelcome(*this, *it);
+	++it;
+    }
 }
 
 /*

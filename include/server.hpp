@@ -10,8 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef CLIENT_HPP
-#define CLIENT_HPP
+#ifndef SERVER_HPP
+#define SERVER_HPP
 
 #include <sys/types.h>
 #include <sys/socket.h> // Permet de d'utiliser la fonction socket
@@ -19,6 +19,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <iostream>
+#include <string>
 #define MAX_CLIENT 10
 
 struct global

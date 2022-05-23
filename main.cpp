@@ -14,14 +14,14 @@ void     parsing(int ac, char **av,  global *global)
     std::string port = av[1];
     std::string password = av[2];
 
-    if (std::stoi(port) < 1023)
+    if (atoi(port.c_str()) < 1023)
         throw errorReturn("Usage: ports from 0 to 1023 are reserved for server access and therefore unusable ");
-    if (std::stoi(port) > 65535)
+    if (atoi(port.c_str()) > 65535)
         throw errorReturn("Usage: ports are unusable ");
     if ((!isNumber(password)) || (password.size() < 4))
         throw errorReturn("Usage: password needs to be at least 4 digits ");
-    global->port = std::stoi(port);
-    global->password = std::stoi(password);
+    global->port = atoi(port.c_str());
+    global->password = atoi(password.c_str());
 }
 
 int main(int ac, char **av)

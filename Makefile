@@ -30,7 +30,7 @@ CLIENT_SRC = client.cpp
 
 CLIENT_HEADER = include/client.hpp
 
-C++		= c++ -Wall -Wextra -Werror -std=c++98
+C++		= c++ -g -Wall -Wextra -Werror -std=c++98
 
 OBJS	=	$(SRCS:.cpp=.o)
 

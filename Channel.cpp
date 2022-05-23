@@ -1,9 +1,8 @@
 #include "include/Channel.hpp"
 
 
-Channel::Channel(const std::string &src) : _name(src), _password(NULL), _isClosed(false)
+Channel::Channel(const std::string &src) : _name(src), _password(""), _isClosed(false)
 {
-    ;
 }
 
 
@@ -29,6 +28,10 @@ Channel Channel::operator=(const Channel &src)
     return (*this);
 }
 
+std::string Channel::getName(void) {
+    return (_name);
+}
+
 /*
  * Channels names are strings (beginning with a '&', '#', '+' or '!'
  * character) of length up to fifty (50) characters.  Channel names are
@@ -46,13 +49,14 @@ Channel Channel::operator=(const Channel &src)
  * namespaces for channel names.  This is important because of the
  * protocol limitations regarding namespaces (in general)
  * */
-bool Channel::namedCorrectly(const std::string &chan_name)
+bool Channel::namedCorrectly(void)
 {
     std::size_t found;
     std::string parameters;
+    std::string chan_name = _name;
 
     parameters = chan_name.substr(0, 1);
-    if (parameters != "&" || parameters != "#" || parameters != "+" || parameters != "!")
+    if (parameters != "&" && parameters != "#" && parameters != "+" && parameters != "!")
         return (false);
     found = chan_name.find(" ");
     if (found != std::string::npos)
@@ -75,7 +79,7 @@ bool Channel::namedCorrectly(const std::string &chan_name)
  * Here the objective is to create a channel and add it right into our map channels_list
  * if the channel doesn't exit, otherwise we return the pointer of the channel
  * */
-Channel *Channel::createOrJoin(std::map<std::string, Channel*> channels_list, std::string chan_name)
+Channel *createOrJoin(std::map<std::string, Channel*> &channels_list, std::string chan_name)
 {
     std::map<std::string, Channel*>::iterator it = channels_list.begin();
     while (it != channels_list.end())
