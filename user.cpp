@@ -252,9 +252,20 @@ std::vector<std::string>	ft_extract(std::string src, char set)
 }
 void	User::commandNICK(std::string &buffer)
 {    
-    std::vector<std::string> extract = ft_extract(buffer, ' ');
-    nickname = extract[1];
+	//:flmastor NICK TEST
+	std::string output;
+	std::vector<std::string> extract = ft_extract(buffer, ' ');
+	std::string new_name = extract[1];
+
+	output = ":";
+	output += nickname;
+	output += " NICK ";
+	output += new_name;
+	output += "\r\n";
+
+	nickname = new_name;
     std::cout << GREEN  << "#   Serveur info: " << "Socket number# " <<getSocket() << " set nickname to " << nickname << NORMAL << std::endl;
+	sendClient(output);
 }
 
 void	User::commandUSER(std::string &buffer)
