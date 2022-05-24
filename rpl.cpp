@@ -104,17 +104,20 @@ std::string	RPL_MYINFO(const User* client, const std::string& network)
 
 void	RPL_PING(const User* client, std::string packet)
 {
+    (void)client;
+
     std::string output;
     output = ":";
     output += packet;
+    output += " PONG ";
+    output += packet;
     output += " :";
     output += packet;
-    (void)client;
+    output += "\r\n";
 	if (packet.size() < 2)
 		throw errorReturn(strerror(errno));
-    output += "\r\n";
    // : :InRealunControl PONG InRealunControl :InRealunControl
-	sendClient(client, ": PONG\r\n");
+	sendClient(client, output);
 }
 
 std::string	RPL_MODE( User* client, std::string packet) 
