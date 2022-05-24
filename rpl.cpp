@@ -116,7 +116,6 @@ void	RPL_PING(const User* client, std::string packet)
     output += "\r\n";
 	if (packet.size() < 2)
 		throw errorReturn(strerror(errno));
-   // : :InRealunControl PONG InRealunControl :InRealunControl
 	sendClient(client, output);
 }
 
