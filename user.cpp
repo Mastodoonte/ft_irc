@@ -8,11 +8,11 @@
 #include <string.h>
 #include <errno.h>
 #define SERVER_NAME "TEST_SERVEUR"
+#define VERSION "beta version"
 
 std::map<std::string, Channel*>	    User::channels;
 
-User::User(void) : caps(false), capsend(false), pass(false), nick(false), user(false), welcome(false), socket(-1) {}
-
+User::User(void) : caps(false), capsend(false), pass(false), nick(false), user(false), welcome(false), socket(-1), welcome_done(false) {}
 User::~User(void) {
 }
 
@@ -160,7 +160,7 @@ void	User::chooseCMD(char *buffer, std::map<int, User>	user_tab, int j)
 			displayCmd(str_buffer);
     	    if (!str_buffer.compare(0, 4, "PING"))
 			{
-			    return (RPL_PING(this, str_buffer));
+			    return (RPL_PING(this, SERVER_NAME));
 			}
 		    if (checkIfRegistred() == false && welcome == false)
 		    {
@@ -179,6 +179,10 @@ void	User::chooseCMD(char *buffer, std::map<int, User>	user_tab, int j)
 		    		sendClient( RPL_WELCOME(this, SERVER_NAME));
 					sendClient( RPL_YOURHOST(this, SERVER_NAME));
 					sendClient( RPL_CREATED(this, SERVER_NAME));
+					sendClient( RPL_MYINFO(this, SERVER_NAME));
+					sendClient( RPL_MOTD1(this, SERVER_NAME));
+					sendClient( RPL_MOTD2(this, SERVER_NAME));
+					sendClient( RPL_MOTD3(this, SERVER_NAME));
     	        	eraseCMD(&str_buffer);
 				}
     	    }
@@ -221,27 +225,43 @@ void	User::chooseCMD(char *buffer, std::map<int, User>	user_tab, int j)
 /*                  Commands                */
 //////////////////////////////////////////////
 
-void	User::commandNICK(std::string &buffer)
+std::vector<std::string>	ft_extract(std::string src, char set)
 {
+	std::vector<std::string>	extract;
+	std::string					res;
+	std::string					token;
+	int 						pos = 0;
 
-    int pos1 = 0;
-    int pos2 = 0;
-    
-    pos1 = buffer.find(' ') + 1;
-    pos2 = buffer.find('\r');
-    nickname = buffer.substr(pos1, pos2 - pos1);
+    pos = src.find("\r\n");
+    if (pos != -1)
+	{
+		res = src.substr(0, pos);
+	}
+    else
+		throw errorReturn(strerror(errno));
+	std::stringstream	stream(res);
+	while (getline(stream, token, set))
+		extract.push_back(token);
+	return (extract);
+}
+void	User::commandNICK(std::string &buffer)
+{    
+    std::vector<std::string> extract = ft_extract(buffer, ' ');
+    nickname = extract[1];
     std::cout << GREEN  << "#   Serveur info: " << "Socket number# " <<getSocket() << " set nickname to " << nickname << NORMAL << std::endl;
 }
 
-void	User::commandUSER(std::string &buffer) {
-    int pos1 = 0;
-    int pos2 = 0;
-
-    pos1 = buffer.find(' ') + 1;
-    pos2 = buffer.find(' ', pos1);
-    username = buffer.substr(pos1, pos2 - pos1);
-    pos1 = buffer.find(':') + 1;
-    realname = buffer.substr(pos1, buffer.size() - pos1);
+void	User::commandUSER(std::string &buffer)
+{
+	std::vector<std::string> extract = ft_extract(buffer, ' ');
+	std::vector<std::string>::iterator it = extract.begin();
+	it++;
+	while(it != extract.end())
+	{
+		username += *it;
+		username += " ";
+		it++;
+	}
     std::cout << GREEN << "#   Serveur info: " << "Socket number# " <<getSocket() << " set Username to " << username << NORMAL << std::endl;
 }
 
@@ -252,17 +272,29 @@ void	User::commandPASS(std::string &buffer)
 
 void	User::commandMODE(std::string &buffer)
 {
-	(void)buffer;
-	int pos1 = 0;
-    int pos2 = 0;
-
-	pos1 = buffer.find(' ') + 1;
-    pos2 = buffer.find('\n');
-    std::string mode = buffer.substr(pos1, pos2 - pos1);
+	std::vector<std::string> extract = ft_extract(buffer, ' ');
+    std::vector<std::string>::iterator it = extract.begin();
+	it++;
+	it++;
+	while(it != extract.end())
+	{
+		this->mode.push_back(*it);
+		it++;
+	}
 	sendClient( RPL_MODE(this, SERVER_NAME));
 }
 
-static void splitArg(std::vector<std::string> &chan, std::string buffer) {
+void	User::commandMOTD(std::string &buffer)
+{
+	(void)buffer;
+/*	sendClient( RPL_MOTD1(this, SERVER_NAME));
+	sendClient( RPL_MOTD2(this, SERVER_NAME));
+	sendClient( RPL_MOTD3(this, SERVER_NAME));*/
+}
+
+
+static void splitArg(std::vector<std::string> &chan, std::string buffer) 
+{
     int pos = 0;
 
     while (buffer.size())
@@ -343,15 +375,3 @@ void	User::commandPRIVMSG(std::string &buffer, std::map<int, User>	user_tab, int
 			send(it1->socket, tmp.c_str(), tmp.size(), 0);
 	}
 }
-
-/*
-  <=======]}======
-    --.   /|
-   _\"/_.'/
- .'._._,.'
- :/ \{}/
-(L  /--',----._
-    |          \\
-   : /-\ .'-'\ / |
---> \\, ||    \|
-     \/ ||    ||*/

@@ -19,7 +19,8 @@ SRCS	:=	main.cpp \
 			server.cpp \
 			user.cpp \
 			Channel.cpp \
-			rpl.cpp
+			rpl.cpp \
+			utils.cpp \
 
 HEAD	:=	include/server.hpp \
 		include/user.hpp \

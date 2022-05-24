@@ -42,6 +42,7 @@ class	User
 		void	commandMODE(std::string &buffer);
 		void	commandJOIN(std::string &buffer, std::map<int, User>	user_tab, int j);
 		void	commandPRIVMSG(std::string &buffer, std::map<int, User>	user_tab, int j); 
+		void	commandMOTD(std::string &buffer);
 
 		bool    checkIfRegistred(void);
 		void	sendClient(const std::string packet);
@@ -54,6 +55,7 @@ class	User
 		bool	nick;
 		bool	user;
 		bool	welcome;
+		bool	welcome_done;
 
 	    std::string  username;
 	    std::string  nickname;
@@ -64,6 +66,7 @@ class	User
 
 		std::map<std::string, Channel *> getChannels() const;
 		static std::map<std::string, Channel*>    channels;
+		std::vector<std::string>	mode;
     private:
 	    sockaddr_in	addr;
 	    socklen_t	socket_len;

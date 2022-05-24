@@ -4,7 +4,6 @@
 #include <iostream>
 #include <vector>
 #include <map>
-#include "Client.hpp"
 #include "user.hpp"
 
 class User;
