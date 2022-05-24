@@ -12,7 +12,7 @@
 
 std::map<std::string, Channel*>	    User::channels;
 
-User::User(void) : caps(false), capsend(false), pass(false), nick(false), user(false), welcome(false), socket(-1), welcome_done(false) {}
+User::User(void) : caps(false), capsend(false), pass(false), nick(false), user(false), welcome(false), welcome_done(false), socket(-1) {}
 User::~User(void) {
 }
 
@@ -211,6 +211,11 @@ void	User::chooseCMD(char *buffer, std::map<int, User>	user_tab, int j)
 				commandPRIVMSG(str_buffer, user_tab, j);
 				eraseCMD(&str_buffer);
 			}
+			else if (!str_buffer.compare(0, 4,"MOTD"))
+			{
+				commandMOTD(str_buffer);
+				eraseCMD(&str_buffer);
+			}
 		    else
     	    {
 		        std::cout << "Unknown command: " << str_buffer << std::endl;
@@ -287,9 +292,9 @@ void	User::commandMODE(std::string &buffer)
 void	User::commandMOTD(std::string &buffer)
 {
 	(void)buffer;
-/*	sendClient( RPL_MOTD1(this, SERVER_NAME));
+	sendClient( RPL_MOTD1(this, SERVER_NAME));
 	sendClient( RPL_MOTD2(this, SERVER_NAME));
-	sendClient( RPL_MOTD3(this, SERVER_NAME));*/
+	sendClient( RPL_MOTD3(this, SERVER_NAME));
 }
 
 
