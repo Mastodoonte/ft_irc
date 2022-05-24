@@ -389,12 +389,24 @@ void	User::commandJOIN(std::string &buffer, std::map<int, User>	user_tab, int j)
 
 void	User::commandPRIVMSG(std::string &buffer, std::map<int, User>	user_tab, int j)
 {
-	std::map<std::string, Channel*>::iterator it = user_tab[j].channels.begin();
-
-	for (std::vector<t_client>::iterator it1 = it->second->_chan_clients.begin(); it1 != it->second->_chan_clients.end(); it1++)
+	if (channels.size() >= 1)
 	{
-		std::string tmp = buffer + "\r\n";
-		if (j != it1->socket)
-			send(it1->socket, tmp.c_str(), tmp.size(), 0);
+		std::map<std::string, Channel*>::iterator it = user_tab[j].channels.begin();
+
+		for (std::vector<t_client>::iterator it1 = it->second->_chan_clients.begin(); it1 != it->second->_chan_clients.end(); it1++)
+		{
+			std::string tmp = buffer + "\r\n";
+			if (j != it1->socket)
+				send(it1->socket, tmp.c_str(), tmp.size(), 0);
+		}
+	}
+	else if (user_tab.size() >= 1)
+	{
+		for (std::map<int, User>::iterator it_u = user_tab.begin(); it_u != user_tab.end(); it_u++)
+		{
+			std::string tmp = buffer + "\r\n";
+			if (j != it_u->second.socket)
+				send(it_u->second.socket, tmp.c_str(), tmp.size(), 0);
+		}
 	}
 }
