@@ -12,7 +12,7 @@
 
 std::map<std::string, Channel*>	    User::channels;
 
-User::User(void) : caps(false), capsend(false), pass(false), nick(false), user(false), welcome(false), welcome_done(false), socket(-1) {}
+User::User(void) : caps(false), capsend(false), pass(false), nick(false), user(false), welcome(false), welcome_done(false), change_mode(true), socket(-1) {}
 User::~User(void) {
 }
 
@@ -211,8 +211,9 @@ void	User::chooseCMD(char *buffer, std::map<int, User>	user_tab, int j)
 				commandPRIVMSG(str_buffer, user_tab, j);
 				eraseCMD(&str_buffer);
 			}
-			else if (!str_buffer.compare(0, 4,"MOTD"))
+			else if (!str_buffer.compare(0, 4," MOTD"))
 			{
+				exit(1);
 				commandMOTD(str_buffer);
 				eraseCMD(&str_buffer);
 			}
@@ -286,7 +287,13 @@ void	User::commandMODE(std::string &buffer)
 		this->mode.push_back(*it);
 		it++;
 	}
-	sendClient( RPL_MODE(this, SERVER_NAME));
+	if (change_mode == true)
+	{
+		sendClient( RPL_MODE(this, SERVER_NAME));
+		change_mode = false;
+	}
+	else
+		;
 }
 
 void	User::commandMOTD(std::string &buffer)

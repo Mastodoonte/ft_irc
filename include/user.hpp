@@ -56,6 +56,7 @@ class	User
 		bool	user;
 		bool	welcome;
 		bool	welcome_done;
+		bool	change_mode;
 
 	    std::string  username;
 	    std::string  nickname;
