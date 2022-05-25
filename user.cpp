@@ -189,17 +189,17 @@ void	User::chooseCMD(char *buffer, std::map<int, User>	user_tab, int j)
 			else if (!str_buffer.compare(0, 4, "MODE"))
 		    {
 		        commandMODE(str_buffer);
-		         eraseCMD(&str_buffer);
+		        eraseCMD(&str_buffer);
 		    }
 		    else if (!str_buffer.compare(0, 4, "NICK"))
 		    {
 		        commandNICK(str_buffer);
-		         eraseCMD(&str_buffer);
+		        eraseCMD(&str_buffer);
 		    }
 		    else if (!str_buffer.compare(0, 4, "JOIN"))
 		    {
-			commandJOIN(str_buffer, user_tab, j);
-			eraseCMD(&str_buffer);
+				commandJOIN(str_buffer, user_tab, j);
+				eraseCMD(&str_buffer);
 		    }
 		    else if (!str_buffer.compare(0, 4, "USER"))
 		    {
@@ -211,9 +211,8 @@ void	User::chooseCMD(char *buffer, std::map<int, User>	user_tab, int j)
 				commandPRIVMSG(str_buffer, user_tab, j);
 				eraseCMD(&str_buffer);
 			}
-			else if (!str_buffer.compare(0, 4," MOTD"))
+			else if (!str_buffer.compare(0, 4,"motd"))
 			{
-				exit(1);
 				commandMOTD(str_buffer);
 				eraseCMD(&str_buffer);
 			}
@@ -244,7 +243,9 @@ std::vector<std::string>	ft_extract(std::string src, char set)
 		res = src.substr(0, pos);
 	}
     else
+	{
 		throw errorReturn(strerror(errno));
+	}
 	std::stringstream	stream(res);
 	while (getline(stream, token, set))
 		extract.push_back(token);
@@ -396,6 +397,7 @@ void	User::commandPRIVMSG(std::string &buffer, std::map<int, User>	user_tab, int
 		for (std::vector<t_client>::iterator it1 = it->second->_chan_clients.begin(); it1 != it->second->_chan_clients.end(); it1++)
 		{
 			std::string tmp = buffer + "\r\n";
+			std::cout  << BLUE << "-> " << tmp << NORMAL;
 			if (j != it1->socket)
 				send(it1->socket, tmp.c_str(), tmp.size(), 0);
 		}
@@ -405,6 +407,7 @@ void	User::commandPRIVMSG(std::string &buffer, std::map<int, User>	user_tab, int
 		for (std::map<int, User>::iterator it_u = user_tab.begin(); it_u != user_tab.end(); it_u++)
 		{
 			std::string tmp = buffer + "\r\n";
+			std::cout  << BLUE << "-> " << it_u->second.socket << NORMAL;
 			if (j != it_u->second.socket)
 				send(it_u->second.socket, tmp.c_str(), tmp.size(), 0);
 		}
