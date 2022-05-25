@@ -6,7 +6,7 @@
 /*   By: fayel-ha <fayel-ha@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/28 18:05:43 by florianmast       #+#    #+#             */
-/*   Updated: 2022/05/24 00:57:42 by fayel-ha         ###   ########.fr       */
+/*   Updated: 2022/05/24 22:45:51 by fayel-ha         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -135,7 +135,7 @@ void    listenUsers(int *sock_err, int *server_socket, int nb_client, global *gl
     {
         throw errorReturn("Error: listen");
     } 
-    std::cout << "Listen function has operated well on port :" << PORT << std::endl;
+    std::cout << "Listen function has operated well on port :" << global->port << std::endl;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

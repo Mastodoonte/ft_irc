@@ -8,12 +8,12 @@
 #include <string.h>
 #include <errno.h>
 #define SERVER_NAME "TEST_SERVEUR"
+#define VERSION "beta version"
 
 std::map<std::string, Channel*>	    User::channels;
 std::vector<std::string>	    User::allNickname;
 
-User::User(void) : caps(false), capsend(false), pass(false), nick(false), user(false), welcome(false), socket(-1) {}
-
+User::User(void) : caps(false), capsend(false), pass(false), nick(false), user(false), welcome(false), welcome_done(false), change_mode(true), socket(-1) {}
 User::~User(void) {
 }
 
@@ -161,7 +161,7 @@ void	User::chooseCMD(char *buffer, std::map<int, User>	user_tab, int j)
 			displayCmd(str_buffer);
     	    if (!str_buffer.compare(0, 4, "PING"))
 			{
-			    return (RPL_PING(this, str_buffer));
+			    return (RPL_PING(this, SERVER_NAME));
 			}
 		    if (checkIfRegistred() == false && welcome == false)
 		    {
@@ -180,6 +180,10 @@ void	User::chooseCMD(char *buffer, std::map<int, User>	user_tab, int j)
 		    		sendClient( RPL_WELCOME(this, SERVER_NAME));
 					sendClient( RPL_YOURHOST(this, SERVER_NAME));
 					sendClient( RPL_CREATED(this, SERVER_NAME));
+					sendClient( RPL_MYINFO(this, SERVER_NAME));
+					sendClient( RPL_MOTD1(this, SERVER_NAME));
+					sendClient( RPL_MOTD2(this, SERVER_NAME));
+					sendClient( RPL_MOTD3(this, SERVER_NAME));
     	        	eraseCMD(&str_buffer);
 				}
     	    }
@@ -213,6 +217,17 @@ void	User::chooseCMD(char *buffer, std::map<int, User>	user_tab, int j)
 			commandPART(str_buffer);
 			eraseCMD(&str_buffer);
 		    }
+			else if (!str_buffer.compare(0, 7,"PRIVMSG"))
+			{
+				commandPRIVMSG(str_buffer, user_tab, j);
+				eraseCMD(&str_buffer);
+			}
+			else if (!str_buffer.compare(0, 4," MOTD"))
+			{
+				exit(1);
+				commandMOTD(str_buffer);
+				eraseCMD(&str_buffer);
+			}
 		    else
 		    {
 			std::cout << "Unknown command: " << str_buffer << std::endl;
@@ -233,42 +248,70 @@ static std::string  getPrefix(User &usr) {
     return (ret + "!" + usr.username + "@" + usr.ipaddr);
 }
 
-void	User::commandNICK(std::string &buffer)
+std::vector<std::string>	ft_extract(std::string src, char set)
 {
-    int pos1 = 0;
-    int pos2 = 0;
-    std::vector<std::string>::iterator it = allNickname.begin();
-    std::string err = "";
+	std::vector<std::string>	extract;
+	std::string					res;
+	std::string					token;
+	int 						pos = 0;
 
-    pos1 = buffer.find(' ') + 1;
-    pos2 = buffer.find('\r');
-    nickname = buffer.substr(pos1, pos2 - pos1);
-    while (it != allNickname.end())
-    {
-	if (*it == nickname)
+    pos = src.find("\r\n");
+    if (pos != -1)
 	{
-	    err += ": 443 * " + nickname + " :Nickname is already in use";
-	    err += "\r\n";
-	    sendClient(err);
-	    nickname += "_";
-	    it = allNickname.begin();
-	    err = "";
+		res = src.substr(0, pos);
 	}
-	++it;
+    else
+		throw errorReturn(strerror(errno));
+	std::stringstream	stream(res);
+	while (getline(stream, token, set))
+		extract.push_back(token);
+	return (extract);
+}
+void	User::commandNICK(std::string &buffer)
+{    
+	//:flmastor NICK TEST
+	std::string output;
+	std::vector<std::string> extract = ft_extract(buffer, ' ');
+	std::vector<std::string>::iterator it = allNickname.begin();
+	std::string new_name = extract[1];
+	std::string err = "";
+
+	output = ":";
+	while (it != allNickname.end())
+    {
+		if (*it == new_name)
+		{
+	    	err += ": 443 * " + new_name + " :Nickname is already in use";
+	    	err += "\r\n";
+	    	sendClient(err);
+	    	new_name += "_";
+	    	it = allNickname.begin();
+		    err = "";
+		}
+		++it;
     }
-    allNickname.push_back(nickname);
+	allNickname.push_back(new_name);
+	output += nickname;
+	output += " NICK ";
+	output += new_name;
+	output += "\r\n";
+
+	nickname = new_name;
     std::cout << GREEN  << "#   Serveur info: " << "Socket number# " <<getSocket() << " set nickname to " << nickname << NORMAL << std::endl;
+	sendClient(output);
 }
 
-void	User::commandUSER(std::string &buffer) {
-    int pos1 = 0;
-    int pos2 = 0;
-
-    pos1 = buffer.find(' ') + 1;
-    pos2 = buffer.find(' ', pos1);
-    username = buffer.substr(pos1, pos2 - pos1);
-    pos1 = buffer.find(':') + 1;
-    realname = buffer.substr(pos1, buffer.size() - pos1);
+void	User::commandUSER(std::string &buffer)
+{
+	std::vector<std::string> extract = ft_extract(buffer, ' ');
+	std::vector<std::string>::iterator it = extract.begin();
+	it++;
+	while(it != extract.end())
+	{
+		username += *it;
+		username += " ";
+		it++;
+	}
     std::cout << GREEN << "#   Serveur info: " << "Socket number# " <<getSocket() << " set Username to " << username << NORMAL << std::endl;
 }
 
@@ -279,21 +322,40 @@ void	User::commandPASS(std::string &buffer)
 
 void	User::commandMODE(std::string &buffer)
 {
-	(void)buffer;
-	int pos1 = 0;
-    int pos2 = 0;
+	std::vector<std::string> extract = ft_extract(buffer, ' ');
+    std::vector<std::string>::iterator it = extract.begin();
+	it++;
+	it++;
+	while(it != extract.end())
+	{
+		this->mode.push_back(*it);
+		it++;
+	}
+	if (change_mode == true)
+	{
+		sendClient( RPL_MODE(this, SERVER_NAME));
+		change_mode = false;
+	}
+	else
+	{
+		;
+	}
+}
 
-	pos1 = buffer.find(' ') + 1;
-    pos2 = buffer.find('\n');
-    std::string mode = buffer.substr(pos1, pos2 - pos1);
-	sendClient( RPL_MODE(this, SERVER_NAME));
+void	User::commandMOTD(std::string &buffer)
+{
+	(void)buffer;
+	sendClient( RPL_MOTD1(this, SERVER_NAME));
+	sendClient( RPL_MOTD2(this, SERVER_NAME));
+	sendClient( RPL_MOTD3(this, SERVER_NAME));
 }
 
 ///////////////////////////
 //Channel related command//
 ///////////////////////////
 
-static void splitArg(std::vector<std::string> &chan, std::string buffer) {
+static void splitArg(std::vector<std::string> &chan, std::string buffer) 
+{
     int pos = 0;
 
     while (buffer.size())
@@ -453,24 +515,24 @@ void	User::commandPART(std::string &buffer) {
 
 void	User::commandPRIVMSG(std::string &buffer, std::map<int, User>	user_tab, int j)
 {
-	std::map<std::string, Channel*>::iterator it = user_tab[j].channels.begin();
-
-	for (std::vector<t_client>::iterator it1 = it->second->_chan_clients.begin(); it1 != it->second->_chan_clients.end(); it1++)
+	if (channels.size() >= 1)
 	{
-		std::string tmp = buffer + "\r\n";
-		if (j != it1->socket)
-			send(it1->socket, tmp.c_str(), tmp.size(), 0);
+		std::map<std::string, Channel*>::iterator it = user_tab[j].channels.begin();
+
+		for (std::vector<t_client>::iterator it1 = it->second->_chan_clients.begin(); it1 != it->second->_chan_clients.end(); it1++)
+		{
+			std::string tmp = buffer + "\r\n";
+			if (j != it1->socket)
+				send(it1->socket, tmp.c_str(), tmp.size(), 0);
+		}
+	}
+	else if (user_tab.size() >= 1)
+	{
+		for (std::map<int, User>::iterator it_u = user_tab.begin(); it_u != user_tab.end(); it_u++)
+		{
+			std::string tmp = buffer + "\r\n";
+			if (j != it_u->second.socket)
+				send(it_u->second.socket, tmp.c_str(), tmp.size(), 0);
+		}
 	}
 }
-
-/*
-  <=======]}======
-    --.   /|
-   _\"/_.'/
- .'._._,.'
- :/ \{}/
-(L  /--',----._
-    |          \\
-   : /-\ .'-'\ / |
---> \\, ||    \|
-     \/ ||    ||*/

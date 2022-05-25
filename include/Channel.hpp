@@ -6,7 +6,6 @@
 #include <cerrno>
 #include <map>
 #include <cstring>
-#include "Client.hpp"
 #include "user.hpp"
 
 class User;
