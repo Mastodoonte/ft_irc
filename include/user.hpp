@@ -40,7 +40,16 @@ class	User
 	    void    commandUSER(std::string &buffer);
 		void	commandPASS(std::string &buffer);
 		void	commandMODE(std::string &buffer);
+		///////////////////////////
+		//Channel related command//
+		///////////////////////////
 		void	commandJOIN(std::string &buffer, std::map<int, User>	user_tab, int j);
+		bool	chanExist(std::string &chan);
+		bool	inChan(std::string &nickname, std::string &chan);
+		void	commandPART(std::string &buffer);
+		//////////////////////////////////
+		//End of channel related command//
+		//////////////////////////////////
 		void	commandPRIVMSG(std::string &buffer, std::map<int, User>	user_tab, int j); 
 		void	commandMOTD(std::string &buffer);
 
@@ -67,6 +76,7 @@ class	User
 
 		std::map<std::string, Channel *> getChannels() const;
 		static std::map<std::string, Channel*>    channels;
+		static std::vector<std::string> allNickname;
 		std::vector<std::string>	mode;
     private:
 	    sockaddr_in	addr;
