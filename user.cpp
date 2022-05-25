@@ -241,12 +241,6 @@ void	User::chooseCMD(char *buffer, std::map<int, User>	user_tab, int j)
 /*                  Commands                */
 //////////////////////////////////////////////
 
-static std::string  getPrefix(User &usr) {
-    std::string	ret = usr.nickname;
-
-    return (ret + "!" + usr.username + "@" + usr.ipaddr);
-}
-
 std::vector<std::string>	ft_extract(std::string src, char set)
 {
 	std::vector<std::string>	extract;
@@ -268,6 +262,14 @@ std::vector<std::string>	ft_extract(std::string src, char set)
 		extract.push_back(token);
 	return (extract);
 }
+
+static std::string  getPrefix(User &usr) {
+    std::string	ret = usr.nickname;
+
+    std::vector<std::string> ext = ft_extract(usr.username + "\r\n", ' ');
+    return (ret + "!" + ext[0] + "@" + usr.ipaddr);
+}
+
 void	User::commandNICK(std::string &buffer)
 {    
 	//:flmastor NICK TEST
@@ -372,8 +374,9 @@ static void splitArg(std::vector<std::string> &chan, std::string buffer)
 static void JOINwelcome(User &usr, Channel &chan) {
 
     //JOIN message
+    std::vector<std::string> ext = ft_extract(usr.nickname + "\r\n", ' ');
     std::string JOINmsg = usr.nickname.c_str();
-    JOINmsg += "!" + usr.username + "@" + usr.ipaddr;
+    JOINmsg += "!" + ext[0] + "@" + usr.ipaddr;
     JOINmsg += " JOIN :" + chan.getName() + "\r\n";
     chan.sendAllClient(JOINmsg);
 
