@@ -525,8 +525,11 @@ void	User::commandPRIVMSG(std::string &buffer, std::map<int, User>	user_tab, int
 
 		for (std::vector<t_client>::iterator it1 = it->second->_chan_clients.begin(); it1 != it->second->_chan_clients.end(); it1++)
 		{
-			std::string tmp = buffer + "\r\n";
-			std::cout  << BLUE << "-> " << tmp << NORMAL;
+			std::string tmp = ":";
+			tmp += getPrefix(user_tab[j]);
+			//std::string tmp = buffer + "\r\n";
+			tmp += " " + buffer + "\r\n";
+			std::cout  << RED << "-> " << tmp << NORMAL;
 			if (j != it1->socket)
 				send(it1->socket, tmp.c_str(), tmp.size(), 0);
 		}
