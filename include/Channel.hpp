@@ -3,7 +3,9 @@
 
 #include <iostream>
 #include <vector>
+#include <cerrno>
 #include <map>
+#include <cstring>
 #include "Client.hpp"
 #include "user.hpp"
 
@@ -26,7 +28,8 @@ class Channel
 
 	    std::string             getName(void);
         std::vector<t_client>   getChanClient();
-
+	
+	void sendAllClient(std::string packet);
         bool namedCorrectly(void);
         Channel *lookForJoin(std::map<std::string, Channel*> channels_list, std::string chan_name);
         std::vector<t_client>         _chan_clients;

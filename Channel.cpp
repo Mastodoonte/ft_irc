@@ -28,6 +28,20 @@ Channel Channel::operator=(const Channel &src)
     return (*this);
 }
 
+void	Channel::sendAllClient(std::string packet) {
+    std::vector<t_client>::iterator it = _chan_clients.begin();
+    std::string output;
+
+    while (it != _chan_clients.end())
+    {
+	output = packet + "\r\n";
+	std::cout << BLUE << "-> " << packet << NORMAL;
+	if (send(it->socket, output.c_str(), output.length(), 0) == -1)
+		throw errorReturn(strerror(errno));
+	++it;
+    }
+}
+
 std::string Channel::getName(void) {
     return (_name);
 }

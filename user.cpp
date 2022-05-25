@@ -10,6 +10,7 @@
 #define SERVER_NAME "TEST_SERVEUR"
 
 std::map<std::string, Channel*>	    User::channels;
+std::vector<std::string>	    User::allNickname;
 
 User::User(void) : caps(false), capsend(false), pass(false), nick(false), user(false), welcome(false), socket(-1) {}
 
@@ -199,20 +200,25 @@ void	User::chooseCMD(char *buffer, std::map<int, User>	user_tab, int j)
 		    }
 		    else if (!str_buffer.compare(0, 4, "USER"))
 		    {
-				commandUSER(str_buffer);
-				eraseCMD(&str_buffer);
+			commandUSER(str_buffer);
+			eraseCMD(&str_buffer);
 		    }
-			else if (!str_buffer.compare(0, 7,"PRIVMSG"))
-			{
-				commandPRIVMSG(str_buffer, user_tab, j);
-				eraseCMD(&str_buffer);
-			}
+		    else if (!str_buffer.compare(0, 7,"PRIVMSG"))
+		    {
+		    	commandPRIVMSG(str_buffer, user_tab, j);
+		    	eraseCMD(&str_buffer);
+		    }
+		    else if (!str_buffer.compare(0, 4, "PART"))
+		    {
+			commandPART(str_buffer);
+			eraseCMD(&str_buffer);
+		    }
 		    else
-    	    {
-		        std::cout << "Unknown command: " << str_buffer << std::endl;
-				eraseCMD(&str_buffer);
-    	    }
-    	}
+		    {
+			std::cout << "Unknown command: " << str_buffer << std::endl;
+			eraseCMD(&str_buffer);
+		    }
+		}
 	}
 
 }
@@ -221,15 +227,36 @@ void	User::chooseCMD(char *buffer, std::map<int, User>	user_tab, int j)
 /*                  Commands                */
 //////////////////////////////////////////////
 
+static std::string  getPrefix(User &usr) {
+    std::string	ret = usr.nickname;
+
+    return (ret + "!" + usr.username + "@" + usr.ipaddr);
+}
+
 void	User::commandNICK(std::string &buffer)
 {
-
     int pos1 = 0;
     int pos2 = 0;
-    
+    std::vector<std::string>::iterator it = allNickname.begin();
+    std::string err = "";
+
     pos1 = buffer.find(' ') + 1;
     pos2 = buffer.find('\r');
     nickname = buffer.substr(pos1, pos2 - pos1);
+    while (it != allNickname.end())
+    {
+	if (*it == nickname)
+	{
+	    err += ": 443 * " + nickname + " :Nickname is already in use";
+	    err += "\r\n";
+	    sendClient(err);
+	    nickname += "_";
+	    it = allNickname.begin();
+	    err = "";
+	}
+	++it;
+    }
+    allNickname.push_back(nickname);
     std::cout << GREEN  << "#   Serveur info: " << "Socket number# " <<getSocket() << " set nickname to " << nickname << NORMAL << std::endl;
 }
 
@@ -262,6 +289,10 @@ void	User::commandMODE(std::string &buffer)
 	sendClient( RPL_MODE(this, SERVER_NAME));
 }
 
+///////////////////////////
+//Channel related command//
+///////////////////////////
+
 static void splitArg(std::vector<std::string> &chan, std::string buffer) {
     int pos = 0;
 
@@ -275,31 +306,37 @@ static void splitArg(std::vector<std::string> &chan, std::string buffer) {
     }
 }
 
-static void JOINwelcome(User &usr, std::string chan_name) {
+static void JOINwelcome(User &usr, Channel &chan) {
 
     //JOIN message
     std::string JOINmsg = usr.nickname.c_str();
     JOINmsg += "!" + usr.username + "@" + usr.ipaddr;
-    JOINmsg += " JOIN " + chan_name + "\r\n";
-    usr.sendClient(JOINmsg);
+    JOINmsg += " JOIN :" + chan.getName() + "\r\n";
+    chan.sendAllClient(JOINmsg);
 
     //RPL_TOPIC
-    std::string RPL_TOPIC = "";
-    RPL_TOPIC += ":server_test 332 " + usr.nickname;
-    RPL_TOPIC += " " + chan_name + " :<topic>\r\n";
+    std::string RPL_TOPIC = ":";
+    RPL_TOPIC += getPrefix(usr) + " 332 " + usr.nickname;
+    RPL_TOPIC += " " + chan.getName() + " :<topic>\r\n";
     usr.sendClient(RPL_TOPIC);
 
     //RPL_NAMERPL
-    std::string RPL_NAMERPL = "";
-    RPL_NAMERPL += ":server_test 353 " + usr.nickname;
-    RPL_NAMERPL += " = " + chan_name;
-    RPL_NAMERPL += " :" + usr.nickname + "\r\n";
+    std::string RPL_NAMERPL = ":";
+    std::vector<t_client>::iterator it = chan._chan_clients.begin();
+    RPL_NAMERPL += getPrefix(usr) + " 353 " + usr.nickname;
+    RPL_NAMERPL += " = " + chan.getName() + " :";
+    while (it != chan._chan_clients.end())
+    {
+	RPL_NAMERPL += " " + it->nickname;
+	++it;
+    }
+    RPL_NAMERPL += "\r\n";
     usr.sendClient(RPL_NAMERPL);
 
     //RPL_ENDOFNAMES
-    std::string RPL_ENDOFNAMES = "";
-    RPL_ENDOFNAMES += ":server_test 366 " + usr.nickname;
-    RPL_ENDOFNAMES += " " + chan_name + " :End of NAMES list\r\n";
+    std::string RPL_ENDOFNAMES = ":";
+    RPL_ENDOFNAMES += getPrefix(usr) + " 366 " + usr.nickname;
+    RPL_ENDOFNAMES += " " + chan.getName() + " :End of NAMES list\r\n";
     usr.sendClient(RPL_ENDOFNAMES);
 
 }
@@ -310,14 +347,22 @@ void	User::commandJOIN(std::string &buffer, std::map<int, User>	user_tab, int j)
     std::string	tmp = buffer;
     int pos1 = 0;
     int pos2 = 0;
+    int	key = 1;
 
     pos1 = buffer.find(' ') + 1;
-    pos2 = buffer.find(' ', pos1);
+    if ((pos2 = buffer.find(' ', pos1)) == -1)
+    {
+	pos2 = buffer.size() - 2;
+	key = 0;
+    }
     splitArg(chan, buffer.substr(pos1, pos2 - pos1));
 
-    pos1 = pos2 + 1;
-    pos2 = buffer.size();
-    splitArg(mode, buffer.substr(pos1, pos2 - pos1));
+    if (key)
+    {
+	pos1 = pos2 + 1;
+        pos2 = buffer.size() - 2;
+	splitArg(mode, buffer.substr(pos1, pos2 - pos1));
+    }
     std::vector<std::string>::iterator it = chan.begin();
     while (it != chan.end())
     {
@@ -327,10 +372,84 @@ void	User::commandJOIN(std::string &buffer, std::map<int, User>	user_tab, int j)
 	    channels.erase(*it);
 	    std::cout << "Error: invalid argument" << std::endl;
 	}
-	JOINwelcome(*this, *it);
+	JOINwelcome(*this, *channels[*it]);
 	++it;
     }
 }
+
+bool User::chanExist(std::string &chan) {
+    std::map<std::string, Channel*>::iterator it = channels.begin();
+
+    while (it != channels.end())
+    {
+	if (it->second->getName() == chan)
+	    return (true);
+	++it;
+    }
+    return (false);
+}
+
+bool User::inChan(std::string &nickname, std::string &chan) {
+    std::vector<t_client>::iterator it = channels[chan]->_chan_clients.begin();
+
+    while (it != channels[chan]->_chan_clients.end())
+    {
+	if (it->nickname == nickname)
+	    return (true);
+	++it;
+    }
+    return (false);
+}
+
+void	User::commandPART(std::string &buffer) {
+    std::vector<std::string> chan;
+    std::string	partMSG = "";
+    int	pos1 = 0;
+    int	pos2 = 0;
+
+    pos1 = buffer.find(' ') + 1;
+    if ((pos2 = buffer.find(' ', pos1)) == -1)
+	pos2 = buffer.size() - 2;
+    else
+	partMSG = buffer.substr(pos2 + 1, buffer.size() - (pos2 + 2));
+    splitArg(chan, buffer.substr(pos1, pos2 - pos1));
+
+    std::vector<std::string>::iterator it = chan.begin();
+    while (it != chan.end())
+    {
+	if (chanExist(*it))
+	{
+	    if (inChan(nickname, *it))
+	    {
+		std::string PART_RPL = ":";
+		PART_RPL += getPrefix(*this) + " PART " + *it;
+		if (partMSG.size())
+		    PART_RPL += partMSG;
+		PART_RPL += "\r\n";
+		sendClient(PART_RPL);
+	    }
+	    else
+	    {
+		std::string ERR_NOTONCHANNEL = ":";
+		ERR_NOTONCHANNEL += getPrefix(*this) + " 442 " + nickname + " " + *it;
+		ERR_NOTONCHANNEL += " :You're not on that channel\r\n";
+		sendClient(ERR_NOTONCHANNEL);
+	    }
+	}
+	else
+	{
+	    std::string ERR_NOSUCHCHANNEL = ":";
+	    ERR_NOSUCHCHANNEL += getPrefix(*this) + " 403 " + nickname + " " + *it;
+	    ERR_NOSUCHCHANNEL += " :No such channel\r\n";
+	    sendClient(ERR_NOSUCHCHANNEL);
+	}
+	++it;
+    }
+}
+
+//////////////////////////////////
+//End of channel related command//
+/////////////////////////////////
 
 void	User::commandPRIVMSG(std::string &buffer, std::map<int, User>	user_tab, int j)
 {
