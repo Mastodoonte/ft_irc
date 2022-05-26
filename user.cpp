@@ -229,7 +229,7 @@ void	User::chooseCMD(char *buffer, std::map<int, User>	user_tab, int j)
 			}
 		    else
 		    {
-			std::cout << "Unknown command: " << str_buffer << std::endl;
+			std::cout << BLUE << "Unknown command: "  << str_buffer << NORMAL << std::endl;
 			eraseCMD(&str_buffer);
 		    }
 		}
@@ -296,7 +296,6 @@ void	User::commandNICK(std::string &buffer)
 	output += " NICK ";
 	output += new_name;
 	output += "\r\n";
-
 	nickname = new_name;
     std::cout << GREEN  << "#   Serveur info: " << "Socket number# " <<getSocket() << " set nickname to " << nickname << NORMAL << std::endl;
 	sendClient(output);
