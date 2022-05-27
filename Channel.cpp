@@ -50,6 +50,7 @@ std::vector<t_client>   Channel::getChanClient()
 {
     return (_chan_clients);
 }
+
 /*
  * Channels names are strings (beginning with a '&', '#', '+' or '!'
  * character) of length up to fifty (50) characters.  Channel names are
