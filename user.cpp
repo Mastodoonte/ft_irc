@@ -293,7 +293,7 @@ void	User::commandNICK(std::string &buffer)
 		    err = "";
 		}
 		++it;
-    }
+    } 
 	allNickname.push_back(new_name);
 	output += nickname;
 	output += " NICK ";
@@ -314,7 +314,7 @@ void	User::commandNICK(std::string &buffer)
 	}
 	//
 	nickname = new_name;
-    std::cout << GREEN  << "#   Serveur info: " << "Socket number# " <<getSocket() << " set nickname to " << nickname << NORMAL << std::endl;
+    std::cout << GREEN  << "#   Serveur info: " << "Socket number# " << getSocket() << " set nickname to " << nickname << NORMAL << std::endl;
 	sendClient(output);
 }
 
@@ -535,22 +535,39 @@ void	User::commandPRIVMSG(std::string &buffer, std::map<int, User>	user_tab, int
 		for (std::vector<t_client>::iterator it1 = it->second->_chan_clients.begin(); it1 != it->second->_chan_clients.end(); it1++)
 		{
 			std::string tmp = ":";
+			bool in_Chan = inChan(user_tab[j].nickname, it->second->_name);
+			int pos = 0;
+			pos = buffer.find(' ') + 1;	
 			tmp += getPrefix(user_tab[j]);
-			//std::string tmp = buffer + "\r\n";
 			tmp += " " + buffer + "\r\n";
 			std::cout  << RED << "-> " << tmp << NORMAL;
-			if (j != it1->socket)
+			if (j != it1->socket && in_Chan == true)
 				send(it1->socket, tmp.c_str(), tmp.size(), 0);
 		}
 	}
 	else if (user_tab.size() >= 1)
 	{
+		int pos = 0 ;
+		int pos1 = 0;
+		int i = 0;
+		std::string tmp = ":";
+		std::string user1;
+
+		pos = buffer.find(' ') + 1;
+		pos1 = buffer.find(' ', pos);
+		user1 = buffer.substr(pos, pos1 - pos);
+
+		tmp += getPrefix(user_tab[j]);
+		tmp += " " + buffer + "\r\n";
 		for (std::map<int, User>::iterator it_u = user_tab.begin(); it_u != user_tab.end(); it_u++)
 		{
-			std::string tmp = buffer + "\r\n";
-			std::cout  << BLUE << "-> " << it_u->second.socket << NORMAL;
-			if (j != it_u->second.socket)
-				send(it_u->second.socket, tmp.c_str(), tmp.size(), 0);
+			if (user1 == it_u->second.nickname)
+			{
+				i = it_u->second.socket;
+				break;
+			}
 		}
+		if (user1 == user_tab[i].nickname)
+			send (user_tab[i].socket, tmp.c_str(), tmp.size(), 0);
 	}
 }
