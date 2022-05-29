@@ -1,14 +1,13 @@
 #include "include/Channel.hpp"
 #include "include/user.hpp"
 
-Channel::Channel(const std::string &src) : _name(src), _password(""), _isClosed(false)
+Channel::Channel(const std::string &src) : topic(""), _name(src), _password(""),  _isClosed(false)
 {
 }
 
 
-Channel::Channel(const std::string &src, const std::string &password) : _name(src), _password(password), _isClosed(false)
-{
-    ;
+Channel::Channel(const std::string &src, const std::string &password) : topic(""), _name(src), _password(password),  _isClosed(false)
+{   
 }
 
 Channel::Channel(const Channel &src)
@@ -25,6 +24,7 @@ Channel Channel::operator=(const Channel &src)
     this->_chan_operators = src._chan_operators;
     this->_chan_clients = src._chan_clients;
     this->_chan_banned = src._chan_banned;
+    this->topic = src.topic;
     return (*this);
 }
 
@@ -38,6 +38,37 @@ void	Channel::sendAllClient(std::string packet) {
 	std::cout << BLUE << "-> " << packet << NORMAL;
 	if (send(it->socket, output.c_str(), output.length(), 0) == -1)
 		throw errorReturn(strerror(errno));
+	++it;
+    }
+}
+
+bool	Channel::isOperator(std::string &nickname) {
+    std::vector<std::string>::iterator it = _chan_operators.begin();
+
+    while (it != _chan_operators.end())
+    {
+	if (*it == nickname)
+	    return (true);
+	++it;
+    }
+    return (false);
+}
+
+void	Channel::addOperator(std::string &nickname) {
+    if (!isOperator(nickname))
+	_chan_operators.push_back(nickname);
+}
+
+void	Channel::removeOperator(std::string &nickname) {
+    std::vector<std::string>::iterator it = _chan_operators.begin();
+
+    while (it != _chan_operators.end())
+    {
+	if (*it == nickname)
+	{
+	    _chan_operators.erase(it);
+	    return ;
+	}
 	++it;
     }
 }
@@ -117,6 +148,7 @@ Channel *createOrJoin(std::map<std::string, Channel*> &channels_list, std::strin
     tmp.socket = user_tab[j].socket;
     tmp.nickname = user_tab[j].nickname;
     new_channel->_chan_clients.push_back(tmp);
+    new_channel->addOperator(user_tab[j].nickname);
     channels_list[chan_name] = new_channel;
     return new_channel;
 }

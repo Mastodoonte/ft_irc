@@ -47,6 +47,10 @@ class	User
 		bool	chanExist(std::string &chan);
 		bool	inChan(std::string &nickname, std::string &chan);
 		void	commandPART(std::string &buffer);
+		void	commandModeChannel(std::string &buffer);
+		void	commandTOPIC(std::string &buffer);
+		void	commandLIST(std::string &buffer);
+		void	commandINVITE(std::string &buffer);
 		//////////////////////////////////
 		//End of channel related command//
 		//////////////////////////////////
@@ -84,6 +88,8 @@ class	User
 	    //static std::map<std::string, Channel*>    channels;
 	    
 };
+
+std::string getPrefix(User &usr);
 
 struct errorReturn : public std::exception
 {

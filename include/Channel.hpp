@@ -27,12 +27,18 @@ class Channel
 
 	    std::string             getName(void);
         std::vector<t_client>   getChanClient();
-	
+
+	bool isOperator(std::string &nickname);
+	void addOperator(std::string &nickname);
+	void removeOperator(std::string &nickname);
 	void sendAllClient(std::string packet);
         bool namedCorrectly(void);
         Channel *lookForJoin(std::map<std::string, Channel*> channels_list, std::string chan_name);
+
+	std::string		topic;
         std::vector<t_client>         _chan_clients;
         std::string             _name;
+	
     private:
         Channel(){};
         //std::string             _name; // Publc

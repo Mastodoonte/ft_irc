@@ -190,17 +190,17 @@ void	User::chooseCMD(char *buffer, std::map<int, User>	user_tab, int j)
 			else if (!str_buffer.compare(0, 4, "MODE"))
 		    {
 		        commandMODE(str_buffer);
-		         eraseCMD(&str_buffer);
+		        eraseCMD(&str_buffer);
 		    }
 		    else if (!str_buffer.compare(0, 4, "NICK"))
 		    {
 		        commandNICK(str_buffer);
-		         eraseCMD(&str_buffer);
+		        eraseCMD(&str_buffer);
 		    }
 		    else if (!str_buffer.compare(0, 4, "JOIN"))
 		    {
-			commandJOIN(str_buffer, user_tab, j);
-			eraseCMD(&str_buffer);
+				commandJOIN(str_buffer, user_tab, j);
+				eraseCMD(&str_buffer);
 		    }
 		    else if (!str_buffer.compare(0, 4, "USER"))
 		    {
@@ -217,17 +217,31 @@ void	User::chooseCMD(char *buffer, std::map<int, User>	user_tab, int j)
 			commandPART(str_buffer);
 			eraseCMD(&str_buffer);
 		    }
-			else if (!str_buffer.compare(0, 7,"PRIVMSG"))
-			{
-				commandPRIVMSG(str_buffer, user_tab, j);
-				eraseCMD(&str_buffer);
-			}
-			else if (!str_buffer.compare(0, 4," MOTD"))
-			{
-				exit(1);
-				commandMOTD(str_buffer);
-				eraseCMD(&str_buffer);
-			}
+		    else if (!str_buffer.compare(0, 7,"PRIVMSG"))
+		    {
+			commandPRIVMSG(str_buffer, user_tab, j);
+			eraseCMD(&str_buffer);
+		    }
+		    else if (!str_buffer.compare(0, 4,"motd"))
+		    {
+			commandMOTD(str_buffer);
+			eraseCMD(&str_buffer);
+		    }
+		    else if (!str_buffer.compare(0, 5, "TOPIC"))
+		    {
+			commandTOPIC(str_buffer);
+			eraseCMD(&str_buffer);
+		    }
+		    else if (!str_buffer.compare(0, 4, "LIST"))
+		    {
+			commandLIST(str_buffer);
+			eraseCMD(&str_buffer);
+		    }
+		    else if (!str_buffer.compare(0, 6, "INVITE"))
+		    {
+			commandINVITE(str_buffer);
+			eraseCMD(&str_buffer);
+		    }
 		    else
 		    {
 			std::cout << "Unknown command: " << str_buffer << std::endl;
@@ -255,14 +269,16 @@ std::vector<std::string>	ft_extract(std::string src, char set)
 		res = src.substr(0, pos);
 	}
     else
+	{
 		throw errorReturn(strerror(errno));
+	}
 	std::stringstream	stream(res);
 	while (getline(stream, token, set))
 		extract.push_back(token);
 	return (extract);
 }
 
-static std::string  getPrefix(User &usr) {
+std::string  getPrefix(User &usr) {
     std::string	ret = usr.nickname;
 
     std::vector<std::string> ext = ft_extract(usr.username + "\r\n", ' ');
@@ -328,6 +344,11 @@ void	User::commandMODE(std::string &buffer)
     std::vector<std::string>::iterator it = extract.begin();
 	it++;
 	it++;
+	if (extract.size() >= 2 && extract[1][0] == '#')
+	{
+	    commandModeChannel(buffer);
+	    return ;
+	}
 	while(it != extract.end())
 	{
 		this->mode.push_back(*it);
@@ -374,15 +395,14 @@ static void JOINwelcome(User &usr, Channel &chan) {
 
     //JOIN message
     std::vector<std::string> ext = ft_extract(usr.nickname + "\r\n", ' ');
-    std::string JOINmsg = usr.nickname.c_str();
-    JOINmsg += "!" + ext[0] + "@" + usr.ipaddr;
-    JOINmsg += " JOIN :" + chan.getName() + "\r\n";
+    std::string JOINmsg = ":";
+    JOINmsg += getPrefix(usr) + " JOIN :" + chan.getName() + "\r\n";
     chan.sendAllClient(JOINmsg);
 
     //RPL_TOPIC
     std::string RPL_TOPIC = ":";
     RPL_TOPIC += getPrefix(usr) + " 332 " + usr.nickname;
-    RPL_TOPIC += " " + chan.getName() + " :<topic>\r\n";
+    RPL_TOPIC += " " + chan.getName() + " :" + chan.topic + "\r\n";
     usr.sendClient(RPL_TOPIC);
 
     //RPL_NAMERPL
@@ -392,7 +412,10 @@ static void JOINwelcome(User &usr, Channel &chan) {
     RPL_NAMERPL += " = " + chan.getName() + " :";
     while (it != chan._chan_clients.end())
     {
-	RPL_NAMERPL += " " + it->nickname;
+	RPL_NAMERPL += " ";
+	if (chan.isOperator(it->nickname))
+	    RPL_NAMERPL += "@";
+	RPL_NAMERPL += it->nickname;
 	++it;
     }
     RPL_NAMERPL += "\r\n";
@@ -512,6 +535,157 @@ void	User::commandPART(std::string &buffer) {
     }
 }
 
+void	User::commandModeChannel(std::string &buffer) {
+    std::vector<std::string> token = ft_extract(buffer, ' ');
+    std::string err = "";
+
+    if (token.size() < 4)
+    {
+	err += ":" + getPrefix(*this) + " 461 MODE :Not enough parameters";
+	err += "\r\n";
+	sendClient(err);
+	return ;
+    }
+
+    std::map<std::string, Channel*>::iterator it = channels.begin();
+    while (it != channels.end())
+    {
+	if (it->first == token[1])
+	    break ;
+	++it;
+    }
+    if (it == channels.end())
+    {
+	err = ":" + getPrefix(*this) + " 403 " + token[1] + " :No such channel";
+	err += "\r\n";
+	sendClient(err);
+	return ;
+    }
+    if (!inChan(token[3], token[1]))
+    {
+	err = ":" + getPrefix(*this) + " 441 " + token[3] + " ";
+	err += token[1] + " :They aren't on that channel\r\n";
+	sendClient(err);
+	return ;
+    }
+    if (token[2][1] != 'o' || (token[2][0] != '+' && token[2][0] != '-'))
+    {
+	err = ":" + getPrefix(*this) + " 472 " + token[2][0];
+	err += " :is unknown mode char to me for " + token[1] + "\r\n";
+	sendClient(err);
+	return ;
+    }
+    if (!channels[token[1]]->isOperator(nickname))
+    {
+	err = ":" + getPrefix(*this) + " 482 " + nickname + " " + token[1];
+	err += " :You're not channel operator\r\n";
+	sendClient(err);
+	return ;
+    }
+    if (token[2][0] == '+')
+	channels[token[1]]->addOperator(token[3]);
+    else if (token[2][0] == '-')
+	channels[token[1]]->removeOperator(token[3]);
+    std::string RPL_CHANNELMODEIS = ":" + getPrefix(*this) + " 324 " + nickname + " ";
+    RPL_CHANNELMODEIS += token[1] + " " + token[2] + " " + token[3] + "\r\n";
+    sendClient(RPL_CHANNELMODEIS);
+}
+
+void	User::commandTOPIC(std::string &buffer) {
+    std::vector<std::string> token = ft_extract(buffer, ' ');
+    std::string	err = "";
+
+    if (token.size() == 1)
+    {
+	err += ":" + getPrefix(*this) + " 461 TOPIC :Not enough parameters";
+	err += "\r\n";
+	sendClient(err);
+	return ;
+    }
+    std::map<std::string, Channel*>::iterator it = channels.begin();
+    while (it != channels.end())
+    {
+	if (it->first == token[1])
+	    break ;
+	++it;
+    }
+    if (it == channels.end())
+    {
+	err = ":" + getPrefix(*this) + " 403 " + token[1] + " :No such channel";
+	err += "\r\n";
+	sendClient(err);
+	return ;
+    }
+    if (!inChan(nickname, token[1]))
+    {
+	err = ":" + getPrefix(*this) + " 442 ";
+	err += token[1] + " :You're not on that channel\r\n";
+	sendClient(err);
+	return ;
+    }
+    if (token.size() > 2)
+    {
+	int pos = buffer.rfind(':', buffer.size()) + 1;
+	std::string topic = buffer.substr(pos, buffer.size() - pos - 2);
+	channels[token[1]]->topic = topic;
+    }
+    std::string RPL_TOPIC = ":" + getPrefix(*this) + " 332 " + nickname;
+    RPL_TOPIC += " " + token[1] + " :" + channels[token[1]]->topic + "\r\n";
+    channels[token[1]]->sendAllClient(RPL_TOPIC);
+}
+
+void	User::commandLIST(std::string &buffer) {
+    std::vector<std::string> token = ft_extract(buffer, ' ');
+    std::string RPL_LIST = ":" + getPrefix(*this) + " 322 " + nickname;
+    std::string RPL_LISTEND = ":" + getPrefix(*this) + " 323 " +nickname;
+
+    if (token.size() < 2)
+	return ;
+
+    std::map<std::string, Channel*>::iterator it = channels.begin();
+    while (it != channels.end())
+    {
+	if (it->first == token[1])
+	{
+	    RPL_LIST += " " + it->second->_name + " :" + it->second->topic + "\r\n";
+	    RPL_LISTEND += " :End of LIST\r\n";
+	    sendClient(RPL_LIST);
+	    sendClient(RPL_LISTEND);
+	}
+	++it;
+    }
+}
+
+void	User::commandINVITE(std::string &buffer) {
+    std::vector<std::string> token = ft_extract(buffer, ' ');
+    std::string err = "";
+
+    if (token.size() < 3)
+    {
+	err += ":" + getPrefix(*this) + " 461 INVITE :Not enough parameters";
+	err += "\r\n";
+	sendClient(err);
+	return ;
+    }
+
+    std::map<std::string, Channel*>::iterator ite = channels.begin();
+    while (ite != channels.end())
+    {
+	if (ite->first == token[2] && !inChan(nickname, token[2]))
+	{
+	    err += getPrefix(*this) + " 442 " + nickname + " " + token[2];
+	    err += " :You're not on that channel\r\n";
+	    sendClient(err);
+	    return ;
+	}
+	++ite;
+    }
+    std::string RPL_INVITING = ":";
+    RPL_INVITING += getPrefix(*this) + " 341 " + nickname + " ";
+    RPL_INVITING += token[2] + " " + token[1] + "\r\n";
+    sendClient(RPL_INVITING);
+}
+
 //////////////////////////////////
 //End of channel related command//
 /////////////////////////////////
@@ -525,6 +699,7 @@ void	User::commandPRIVMSG(std::string &buffer, std::map<int, User>	user_tab, int
 		for (std::vector<t_client>::iterator it1 = it->second->_chan_clients.begin(); it1 != it->second->_chan_clients.end(); it1++)
 		{
 			std::string tmp = buffer + "\r\n";
+			std::cout  << BLUE << "-> " << tmp << NORMAL;
 			if (j != it1->socket)
 				send(it1->socket, tmp.c_str(), tmp.size(), 0);
 		}
@@ -534,6 +709,7 @@ void	User::commandPRIVMSG(std::string &buffer, std::map<int, User>	user_tab, int
 		for (std::map<int, User>::iterator it_u = user_tab.begin(); it_u != user_tab.end(); it_u++)
 		{
 			std::string tmp = buffer + "\r\n";
+			std::cout  << BLUE << "-> " << it_u->second.socket << NORMAL;
 			if (j != it_u->second.socket)
 				send(it_u->second.socket, tmp.c_str(), tmp.size(), 0);
 		}
