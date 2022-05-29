@@ -40,6 +40,7 @@ class	User
 	    void    commandUSER(std::string &buffer);
 		void	commandPASS(std::string &buffer);
 		void	commandMODE(std::string &buffer);
+		void	modeUser	(std::string &buffer);
 		///////////////////////////
 		//Channel related command//
 		///////////////////////////

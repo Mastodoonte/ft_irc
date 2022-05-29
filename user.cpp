@@ -244,7 +244,7 @@ void	User::chooseCMD(char *buffer, std::map<int, User>	user_tab, int j)
 		    }
 		    else
 		    {
-			std::cout << "Unknown command: " << str_buffer << std::endl;
+			std::cout << BLUE << "Unknown command: "  << str_buffer << NORMAL << std::endl;
 			eraseCMD(&str_buffer);
 		    }
 		}
@@ -287,7 +287,6 @@ std::string  getPrefix(User &usr) {
 
 void	User::commandNICK(std::string &buffer)
 {    
-	//:flmastor NICK TEST
 	std::string output;
 	std::vector<std::string> extract = ft_extract(buffer, ' ');
 	std::vector<std::string>::iterator it = allNickname.begin();
@@ -307,15 +306,32 @@ void	User::commandNICK(std::string &buffer)
 		    err = "";
 		}
 		++it;
-    }
+    } 
 	allNickname.push_back(new_name);
 	output += nickname;
 	output += " NICK ";
 	output += new_name;
 	output += "\r\n";
-
+	
+	//find and change into channel
+	std::map<std::string, Channel*>::iterator indexChannel;
+	indexChannel = this->channels.begin();
+	if (indexChannel != this->channels.end())
+	{
+		std::vector<t_client>::iterator it1 = indexChannel->second->_chan_clients.begin();
+		std::vector<t_client>::iterator itend = indexChannel->second->_chan_clients.end();
+		while (it1 != itend)
+		{
+			if (it1->nickname == nickname)
+			{
+				it1->nickname = new_name;
+				break;
+			}
+			it1++;
+		}
+	}
 	nickname = new_name;
-    std::cout << GREEN  << "#   Serveur info: " << "Socket number# " <<getSocket() << " set nickname to " << nickname << NORMAL << std::endl;
+    std::cout << GREEN  << "#   Serveur info: " << "Socket number# " << getSocket() << " set nickname to " << nickname << NORMAL << std::endl;
 	sendClient(output);
 }
 
@@ -338,31 +354,21 @@ void	User::commandPASS(std::string &buffer)
     (void)buffer;
 }
 
+void	User::modeUser(std::string &buffer)
+{
+	sendClient(ERR_UMODEUNKNOWNFLAG(this, buffer));
+}
 void	User::commandMODE(std::string &buffer)
 {
 	std::vector<std::string> extract = ft_extract(buffer, ' ');
-    std::vector<std::string>::iterator it = extract.begin();
-	it++;
-	it++;
-	if (extract.size() >= 2 && extract[1][0] == '#')
-	{
-	    commandModeChannel(buffer);
-	    return ;
-	}
-	while(it != extract.end())
-	{
-		this->mode.push_back(*it);
-		it++;
-	}
-	if (change_mode == true)
-	{
-		sendClient( RPL_MODE(this, SERVER_NAME));
-		change_mode = false;
-	}
+	if (extract.size() < 3)
+		sendClient(ERR_NEEDMOREPARAMS(this, buffer));
+	else if(extract.size() == 3)
+		modeUser(buffer);
+	else if (extract.size() == 4)
+		commandModeChannel(buffer);
 	else
-	{
-		;
-	}
+		sendClient(ERR_UNKNOWNCOMMAND(this, SERVER_NAME));
 }
 
 void	User::commandMOTD(std::string &buffer)
@@ -698,20 +704,40 @@ void	User::commandPRIVMSG(std::string &buffer, std::map<int, User>	user_tab, int
 
 		for (std::vector<t_client>::iterator it1 = it->second->_chan_clients.begin(); it1 != it->second->_chan_clients.end(); it1++)
 		{
-			std::string tmp = buffer + "\r\n";
-			std::cout  << BLUE << "-> " << tmp << NORMAL;
-			if (j != it1->socket)
+			std::string tmp = ":";
+			bool in_Chan = inChan(user_tab[j].nickname, it->second->_name);
+			//int pos = 0;
+			//pos = buffer.find(' ') + 1;	
+			tmp += getPrefix(user_tab[j]);
+			tmp += " " + buffer + "\r\n";
+			std::cout  << RED << "-> " << tmp << NORMAL;
+			if (j != it1->socket && in_Chan == true)
 				send(it1->socket, tmp.c_str(), tmp.size(), 0);
 		}
 	}
 	else if (user_tab.size() >= 1)
 	{
+		int pos = 0 ;
+		int pos1 = 0;
+		int i = 0;
+		std::string tmp = ":";
+		std::string user1;
+
+		pos = buffer.find(' ') + 1;
+		pos1 = buffer.find(' ', pos);
+		user1 = buffer.substr(pos, pos1 - pos);
+
+		tmp += getPrefix(user_tab[j]);
+		tmp += " " + buffer + "\r\n";
 		for (std::map<int, User>::iterator it_u = user_tab.begin(); it_u != user_tab.end(); it_u++)
 		{
-			std::string tmp = buffer + "\r\n";
-			std::cout  << BLUE << "-> " << it_u->second.socket << NORMAL;
-			if (j != it_u->second.socket)
-				send(it_u->second.socket, tmp.c_str(), tmp.size(), 0);
+			if (user1 == it_u->second.nickname)
+			{
+				i = it_u->second.socket;
+				break;
+			}
 		}
+		if (user1 == user_tab[i].nickname)
+			send (user_tab[i].socket, tmp.c_str(), tmp.size(), 0);
 	}
 }

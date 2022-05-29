@@ -18,6 +18,8 @@ std::string	RPL_MODE( User* client, std::string packet) ;
 std::string RPL_MOTD1           (User *client, const std::string &network);
 std::string RPL_MOTD2           (User *client, const std::string &network);
 std::string RPL_MOTD3           (User *client, const std::string &network);
-std::string	ERR_NEEDMOREPARAMS  (const User *client, const std::string &packet);
+std::string	ERR_NEEDMOREPARAMS  (const User* client, const std::string &packet);
+std::string	ERR_UNKNOWNCOMMAND  (const User *client, const std::string packet);
+std::string	ERR_UMODEUNKNOWNFLAG(const User *client, const std::string packet);
 
 #endif
