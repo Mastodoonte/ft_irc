@@ -197,10 +197,22 @@ std::string	RPL_MOTD3(const User* client,const std::string &packet)
 /*                             |ERRORS|                             */
 //////////////////////////////////////////////////////////////////////
 
-std::string	ERR_NEEDMOREPARAMS(const User* client, const std::string packet)
+std::string	ERR_NEEDMOREPARAMS(const User* client, const std::string &packet)
 {
     (void)client;
     (void)packet;
-    return "Error";
-    return (": 461 " + client->nickname);
+    std::vector<std::string> extract = ft_extraction(packet, ' ');
+    return (": 461 " + client->nickname + " " + extract[0] + ": Not enough parameters\r\n");
+}
+
+std::string	ERR_UNKNOWNCOMMAND(const User *client, const std::string packet)
+{
+	std::vector<std::string> extract = ft_extraction(packet, ' ');
+    return (": 421 "  + client->nickname + " " + extract[0] + " : Unknown command for the server\r\n");
+}
+
+std::string	ERR_UMODEUNKNOWNFLAG(const User *client, const std::string packet)
+{
+	std::vector<std::string> extract = ft_extraction(packet, ' ');
+    return (": 501 "  + client->nickname + " " + extract[0] + " : Unknown MODE flag for this server\r\n");
 }

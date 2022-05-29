@@ -276,6 +276,7 @@ void	User::commandNICK(std::string &buffer)
 	std::string output;
 	std::vector<std::string> extract = ft_extract(buffer, ' ');
 	std::vector<std::string>::iterator it = allNickname.begin();
+	std::map<std::string, Channel*>::iterator indexChannel;
 	std::string new_name = extract[1];
 	std::string err = "";
 
@@ -298,6 +299,20 @@ void	User::commandNICK(std::string &buffer)
 	output += " NICK ";
 	output += new_name;
 	output += "\r\n";
+	
+	//find and change into channel
+	indexChannel = this->channels.begin();
+	std::vector<t_client>::iterator it1 = indexChannel->second->_chan_clients.begin();
+	while (indexChannel != this->channels.end())
+	{
+		if (it1->nickname == nickname)
+		{
+			it1->nickname = new_name;
+			break;
+		}
+		it1++;
+	}
+	//
 	nickname = new_name;
     std::cout << GREEN  << "#   Serveur info: " << "Socket number# " <<getSocket() << " set nickname to " << nickname << NORMAL << std::endl;
 	sendClient(output);
@@ -322,26 +337,21 @@ void	User::commandPASS(std::string &buffer)
     (void)buffer;
 }
 
+void	User::modeUser(std::string &buffer)
+{
+	sendClient(ERR_UMODEUNKNOWNFLAG(this, buffer));
+}
 void	User::commandMODE(std::string &buffer)
 {
 	std::vector<std::string> extract = ft_extract(buffer, ' ');
-    std::vector<std::string>::iterator it = extract.begin();
-	it++;
-	it++;
-	while(it != extract.end())
-	{
-		this->mode.push_back(*it);
-		it++;
-	}
-	if (change_mode == true)
-	{
-		sendClient( RPL_MODE(this, SERVER_NAME));
-		change_mode = false;
-	}
+	if (extract.size() < 3)
+		sendClient(ERR_NEEDMOREPARAMS(this, buffer));
+	else if(extract.size() == 3)
+		modeUser(buffer);
+//	else if (extract.size() == 4)
+//		modeChannel()
 	else
-	{
-		;
-	}
+		sendClient(ERR_UNKNOWNCOMMAND(this, SERVER_NAME));
 }
 
 void	User::commandMOTD(std::string &buffer)
