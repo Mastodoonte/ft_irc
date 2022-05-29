@@ -272,11 +272,9 @@ static std::string  getPrefix(User &usr) {
 
 void	User::commandNICK(std::string &buffer)
 {    
-	//:flmastor NICK TEST
 	std::string output;
 	std::vector<std::string> extract = ft_extract(buffer, ' ');
 	std::vector<std::string>::iterator it = allNickname.begin();
-	std::map<std::string, Channel*>::iterator indexChannel;
 	std::string new_name = extract[1];
 	std::string err = "";
 
@@ -301,18 +299,22 @@ void	User::commandNICK(std::string &buffer)
 	output += "\r\n";
 	
 	//find and change into channel
+	std::map<std::string, Channel*>::iterator indexChannel;
 	indexChannel = this->channels.begin();
-	std::vector<t_client>::iterator it1 = indexChannel->second->_chan_clients.begin();
-	while (indexChannel != this->channels.end())
+	if (indexChannel != this->channels.end())
 	{
-		if (it1->nickname == nickname)
+		std::vector<t_client>::iterator it1 = indexChannel->second->_chan_clients.begin();
+		std::vector<t_client>::iterator itend = indexChannel->second->_chan_clients.end();
+		while (it1 != itend)
 		{
-			it1->nickname = new_name;
-			break;
+			if (it1->nickname == nickname)
+			{
+				it1->nickname = new_name;
+				break;
+			}
+			it1++;
 		}
-		it1++;
 	}
-	//
 	nickname = new_name;
     std::cout << GREEN  << "#   Serveur info: " << "Socket number# " << getSocket() << " set nickname to " << nickname << NORMAL << std::endl;
 	sendClient(output);
