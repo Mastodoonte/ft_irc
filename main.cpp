@@ -37,7 +37,7 @@ int main(int ac, char **av)
         socketInitialisation(&server_socket);
         sock_err = settingsAndConnection(&server_socket, sock_err, &sin, &global);
         listenUsers(&sock_err, &server_socket, MAX_CLIENT, &global);
-        loopServer(server_socket);
+        loopServer(server_socket, global);
         close(server_socket);
         return (EXIT_SUCCESS);
     }
