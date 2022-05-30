@@ -12,63 +12,47 @@ PRINT_INTERLINE = printf '$(GREEN)$(BOLD)=======================================
 PRINT_INTERLINE_N = printf '$(YELLOW)$(BOLD)================================================================================$(ESC_STOP)\n'
 
 
-NAME_S	=	server
-NAME_C = 	client
+NAME	=	server
 
-SRCS	:=	main.cpp \
+C++		= c++ -g -Wall -Wextra -Werror -std=c++98
+
+SRCS	=	main.cpp \
 			server.cpp \
 			user.cpp \
 			Channel.cpp \
 			rpl.cpp \
 			utils.cpp \
 
-HEAD	:=	include/server.hpp \
-		include/user.hpp \
-		include/rpl.hpp \
+HEAD	=	include/server.hpp \
+			include/user.hpp \
+			include/rpl.hpp \
+			Channel.hpp \
 			
 
-CLIENT_SRC = client.cpp
-
-CLIENT_HEADER = include/client.hpp
-
-C++		= c++ -g -Wall -Wextra -Werror -std=c++98
 
 OBJS	=	$(SRCS:.cpp=.o)
 
-CLIENT_OBJS = $(CLIENT_SRC:.cpp=.o)
 
-all:		$(NAME_S)
+all:		$(NAME)
+
+$(NAME):	$(OBJS)
 	@printf '$(GREEN)$(BOLD)=====================================================================\n';
 	@printf '$(YELLOW)$(BOLD)|          ____  _____         _     ___   ____                     |\n';
 	@printf '$(YELLOW)$(BOLD)|          |__     |           |    |__/   |                        |\n';
 	@printf '$(YELLOW)$(BOLD)|          |       |           |    |  \   |___                     |\n';
 	@printf '$(YELLOW)$(BOLD)|                                                                   |\n';
 	@printf '$(GREEN)$(BOLD)===================================================================== \n';
-	@printf '$(YELLOW)$(BOLD)%s ${NAME_S} $(ESC_STOP)$(YELLOW) built$(ESC_STOP) √\n' '$@'
-
-
-$(NAME_S):	$(OBJS)
-			$(C++) $(OBJS) -o $(NAME_S)
-
-
-
-client:		$(CLIENT_OBJS)
-			@$(C++) $(CLIENT_OBJS) -o $(NAME_C)
-	@printf '$(YELLOW)$(BOLD)%s ${NAME_C} $(ESC_STOP)$(YELLOW) built$(ESC_STOP) √\n' '$@'
-			
+	@printf '$(YELLOW)$(BOLD)%s ${NAME} $(ESC_STOP)$(YELLOW) built$(ESC_STOP) √\n' '$@'
+	$(C++) $(OBJS) -o $(NAME)
 
 clean:
-			rm -rf $(OBJS) $(CLIENT_OBJS)
+			rm -rf $(OBJS)
 
 .cpp.o:
 			$(C++) -c $< -o $(<:.cpp=.o)
 
-$(OBJS):	$(HEAD)
-
-$(CLIENT_OBJS):	$(CLIENT_HEADER)
-
 fclean:		clean
-			rm -rf $(NAME_S) $(NAME_C)
+			rm -rf $(NAME) $(NAME_C)
 
 re:			fclean all
 
