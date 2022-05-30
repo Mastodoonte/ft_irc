@@ -50,10 +50,6 @@ std::map<std::string, Channel *> User::getChannels() const
     return (this->channels);
 }
 
-//Lors de la connection le client envoi 3 commande
-//dans un seul buffer, donc dès qu'une commande
-//a été éffectuer je la retire du buffer.
-
 void displayCmd(const std::string cmd)
 {
 	int pos = 0;
@@ -109,8 +105,12 @@ void	User::Registration(std::string packet, global global)
 		capsend = true;
 		return ;
 	}
-
-	if (!str_buffer.compare(0, 4, "NICK"))
+	if (!str_buffer.compare(0, 4, "NICK") && pass == false)
+	{
+		eraseCMD(&str_buffer);
+		return ;
+	}
+	if (!str_buffer.compare(0, 4, "NICK") && pass == true)
 	{
 		commandNICK(str_buffer);
 		nick = true;
@@ -125,7 +125,14 @@ void	User::Registration(std::string packet, global global)
 		if (extract[1] != SSTR(global.password))
 		{
 			sendClient("464 :Password incorrect\r\n");
-			//	return ;
+			if (nickname.size() > 1)
+			{
+				std::string output;
+				output = ":!@ NICK :";
+				output += nickname;
+				output += "\r\n"; 
+				sendClient(output);
+			}
 				throw badPassword();
 		}
 		pass = true;
@@ -391,7 +398,6 @@ std::string User::getMode(void)
 void	User::modeUser(std::string &buffer, int path, std::vector<std::string> extract)
 {
 	std::string returnMode = ":";
-	//pour un simple feedback msg = :mfirc 221 flmastor s
 	if (path == 1)
 	{
 		std::vector<std::string>::iterator it = mode.begin();
@@ -418,7 +424,6 @@ void	User::modeUser(std::string &buffer, int path, std::vector<std::string> extr
 		}
 		
 	}
-	// Pour changer :flmastor!florianm@florianm MODE flmastor :+s
 	else if (path == 2)
 	{
 		if (extract[1] != nickname || extract[2].length() != 2)
@@ -430,7 +435,6 @@ void	User::modeUser(std::string &buffer, int path, std::vector<std::string> extr
 	 	|| extract[2][1] == 'r'|| extract[2][1] == 'o'|| extract[2][1] == 'O'
 	 	|| extract[2][1] == 's'))
 	 	{
-			// exit(1);
 	 		//si on trouve le char dans notre vector
 	 		std::string new_mode;
 	 		new_mode.push_back(extract[2][1]);

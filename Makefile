@@ -12,7 +12,7 @@ PRINT_INTERLINE = printf '$(GREEN)$(BOLD)=======================================
 PRINT_INTERLINE_N = printf '$(YELLOW)$(BOLD)================================================================================$(ESC_STOP)\n'
 
 
-NAME	=	server
+NAME	=	ircserv
 
 C++		= c++ -g -Wall -Wextra -Werror -std=c++98
 
@@ -42,7 +42,7 @@ $(NAME):	$(OBJS)
 	@printf '$(YELLOW)$(BOLD)|          |       |           |    |  \   |___                     |\n';
 	@printf '$(YELLOW)$(BOLD)|                                                                   |\n';
 	@printf '$(GREEN)$(BOLD)===================================================================== \n';
-	@printf '$(YELLOW)$(BOLD)%s ${NAME} $(ESC_STOP)$(YELLOW) built$(ESC_STOP) √\n' '$@'
+	@printf '$(YELLOW)$(BOLD)%s $(ESC_STOP)$(YELLOW) built$(ESC_STOP) √\n' '$@'
 	$(C++) $(OBJS) -o $(NAME)
 
 clean:
