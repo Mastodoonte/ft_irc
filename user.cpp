@@ -295,7 +295,7 @@ void	User::commandNICK(std::string &buffer)
 
 	output = ":";
 	while (it != allNickname.end())
-    {
+	{
 		if (*it == new_name)
 		{
 	    	err += ": 443 * " + new_name + " :Nickname is already in use";
@@ -306,8 +306,19 @@ void	User::commandNICK(std::string &buffer)
 		    err = "";
 		}
 		++it;
-    } 
-	allNickname.push_back(new_name);
+	}
+        it = allNickname.begin();
+	while (it != allNickname.end())
+        {
+	    if (*it == nickname)
+	    {
+		*it = new_name;
+		break;
+	    }
+	    ++it;
+	}
+	if (it == allNickname.end())
+	    allNickname.push_back(new_name);
 	output += nickname;
 	output += " NICK ";
 	output += new_name;
