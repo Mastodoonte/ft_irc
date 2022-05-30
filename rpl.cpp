@@ -29,12 +29,12 @@ std::vector<std::string>	ft_extraction(std::string src, char set)
 //////////////////////////////////////////////////////////////////////
 /*                                |RPL|                             */
 //////////////////////////////////////////////////////////////////////
-std::string	RPL_WELCOME(const User* client, const std::string& network)
+std::string	RPL_WELCOME(User* client, const std::string& network)
 {
     (void)network;
     std::vector<std::string> extract = ft_extraction(client->username, ' ');
     std::string RPL_WELCOME = ":";
-    RPL_WELCOME += network;
+    RPL_WELCOME += getPrefix(*client);
     RPL_WELCOME += " 001 ";
     RPL_WELCOME += client->nickname;
     RPL_WELCOME += " :Welcome to the Internet Relay Network, ";
@@ -47,12 +47,12 @@ std::string	RPL_WELCOME(const User* client, const std::string& network)
     return (RPL_WELCOME);
 }
 
-std::string	RPL_YOURHOST(const User* client, const std::string& network)
+std::string	RPL_YOURHOST(User* client, const std::string& network)
 {
     (void)network;
     std::vector<std::string> extract = ft_extraction(client->username, ' ');
     std::string RPL_YOURHOST = ":";
-    RPL_YOURHOST += network;
+    RPL_YOURHOST += getPrefix(*client);
     RPL_YOURHOST += " 002 ";
     RPL_YOURHOST += client->nickname;
     RPL_YOURHOST += " :Your host is ";
@@ -63,7 +63,7 @@ std::string	RPL_YOURHOST(const User* client, const std::string& network)
     return (RPL_YOURHOST);
 }
 
-std::string	RPL_CREATED(const User* client, const std::string& network)
+std::string	RPL_CREATED(User* client, const std::string& network)
 {
  //   std::string RPL_YOURHOST = ":serveur_test 003 flmastor :This server was created <today>\r\n";
     std::time_t t = std::time(0);   // get time now
@@ -72,7 +72,7 @@ std::string	RPL_CREATED(const User* client, const std::string& network)
 
     std::vector<std::string> extract = ft_extraction(client->username, ' ');
     std::string RPL_CREATED = ":";
-    RPL_CREATED += network;
+    RPL_CREATED += getPrefix(*client);
     RPL_CREATED += " 003 ";
     RPL_CREATED += client->nickname;
     RPL_CREATED += " :This server was created the ";
@@ -85,13 +85,13 @@ std::string	RPL_CREATED(const User* client, const std::string& network)
     return (RPL_CREATED);
 }
 
-std::string	RPL_MYINFO(const User* client, const std::string& network)
+std::string	RPL_MYINFO(User* client, const std::string& network)
 {   //                                          <available user modes> <available channel modes>
     (void)network;
     (void)client;
     std::vector<std::string> extract = ft_extraction(client->username, ' ');
     std::string RPL_MYINFO = ":";
-    RPL_MYINFO += network;
+    RPL_MYINFO += getPrefix(*client);
     RPL_MYINFO += " 004 ";
     RPL_MYINFO += client->nickname;
     RPL_MYINFO += " ";
@@ -125,7 +125,7 @@ std::string	RPL_MODE( User* client, std::string packet)
     std::vector<std::string>::iterator it = client->mode.begin();
     std::string output = ":";
 
-    output.append(client->getNickname()).append(" MODE ").append(client->getNickname()).append(" ");
+    output.append(getPrefix(*client).append(" 221 ").append(client->getNickname())).append(" ");
     while (it != client->mode.end())
     {
         output += (*it);
@@ -135,12 +135,12 @@ std::string	RPL_MODE( User* client, std::string packet)
     return (output);
 }
 
-std::string	RPL_MOTD1(const User* client,const std::string &packet) 
+std::string	RPL_MOTD1(User* client,const std::string &packet) 
 {
     (void)client;
     (void)packet;
     std::string RPL_MOTD1 = ":";
-    RPL_MOTD1 += packet;
+    RPL_MOTD1 += getPrefix(*client);
     RPL_MOTD1 += " 375 ";
     RPL_MOTD1 += client->nickname;
     RPL_MOTD1 += " :- "; 
@@ -151,13 +151,13 @@ std::string	RPL_MOTD1(const User* client,const std::string &packet)
 
 }
 
-std::string	RPL_MOTD2(const User* client,const std::string &packet) 
+std::string	RPL_MOTD2(User* client,const std::string &packet) 
 {
     (void)client;
     (void)packet;
 
     std::string RPL_MOTD2 = ":";
-    RPL_MOTD2 += packet;
+    RPL_MOTD2 += getPrefix(*client);
     RPL_MOTD2 += " 372 ";
     RPL_MOTD2 += client->nickname;
     RPL_MOTD2 += " : "; 
@@ -180,12 +180,12 @@ std::string	RPL_MOTD2(const User* client,const std::string &packet)
 
 }
 
-std::string	RPL_MOTD3(const User* client,const std::string &packet) 
+std::string	RPL_MOTD3(User* client,const std::string &packet) 
 {
     (void)client;
     (void)packet;
     std::string RPL_MOTD3 = ":";
-    RPL_MOTD3 += packet;
+    RPL_MOTD3 += getPrefix(*client);
     RPL_MOTD3 += " 376 ";
     RPL_MOTD3 += client->nickname;
     RPL_MOTD3 += " : "; 
