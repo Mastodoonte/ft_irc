@@ -204,8 +204,8 @@ void	User::chooseCMD(char *buffer, std::map<int, User>	user_tab, int j)
 		    }
 		    else if (!str_buffer.compare(0, 4, "USER"))
 		    {
-			commandUSER(str_buffer);
-			eraseCMD(&str_buffer);
+				commandUSER(str_buffer);
+				eraseCMD(&str_buffer);
 		    }
 		    else if (!str_buffer.compare(0, 7,"PRIVMSG"))
 		    {
@@ -214,38 +214,48 @@ void	User::chooseCMD(char *buffer, std::map<int, User>	user_tab, int j)
 		    }
 		    else if (!str_buffer.compare(0, 4, "PART"))
 		    {
-			commandPART(str_buffer);
-			eraseCMD(&str_buffer);
+				commandPART(str_buffer);
+				eraseCMD(&str_buffer);
 		    }
 		    else if (!str_buffer.compare(0, 7,"PRIVMSG"))
 		    {
-			commandPRIVMSG(str_buffer, user_tab, j);
-			eraseCMD(&str_buffer);
+				commandPRIVMSG(str_buffer, user_tab, j);
+				eraseCMD(&str_buffer);
 		    }
+			else if (!str_buffer.compare(0, 6, "NOTICE"))
+			{
+				commandPRIVMSG(str_buffer, user_tab, j);
+				eraseCMD(&str_buffer);
+			}
 		    else if (!str_buffer.compare(0, 4,"motd"))
 		    {
-			commandMOTD(str_buffer);
-			eraseCMD(&str_buffer);
+				commandMOTD(str_buffer);
+				eraseCMD(&str_buffer);
 		    }
 		    else if (!str_buffer.compare(0, 5, "TOPIC"))
 		    {
-			commandTOPIC(str_buffer);
-			eraseCMD(&str_buffer);
+				commandTOPIC(str_buffer);
+				eraseCMD(&str_buffer);
 		    }
 		    else if (!str_buffer.compare(0, 4, "LIST"))
 		    {
-			commandLIST(str_buffer);
-			eraseCMD(&str_buffer);
+				commandLIST(str_buffer);
+				eraseCMD(&str_buffer);
 		    }
 		    else if (!str_buffer.compare(0, 6, "INVITE"))
 		    {
-			commandINVITE(str_buffer);
-			eraseCMD(&str_buffer);
+				commandINVITE(str_buffer);
+				eraseCMD(&str_buffer);
 		    }
+			else if (!str_buffer.compare(0, 4, "QUIT"))
+			{
+				commandQUIT(str_buffer, user_tab, j);
+				eraseCMD(&str_buffer);
+			}
 		    else
 		    {
-			std::cout << BLUE << "Unknown command: "  << str_buffer << NORMAL << std::endl;
-			eraseCMD(&str_buffer);
+				std::cout << BLUE << "Unknown command: "  << str_buffer << NORMAL << std::endl;
+				eraseCMD(&str_buffer);
 		    }
 		}
 	}
@@ -715,6 +725,14 @@ void	User::commandINVITE(std::string &buffer) {
 
 void	User::commandPRIVMSG(std::string &buffer, std::map<int, User>	user_tab, int j)
 {
+	if (buffer.find('#') != std::string::npos || buffer.find('&') != std::string::npos)
+		chanPRIVMSG(buffer, user_tab, j);
+	else
+		userPRIVMSG(buffer, user_tab, j);
+}
+
+void	User::chanPRIVMSG(std::string &buffer, std::map<int, User> user_tab, int j)
+{
 	if (channels.size() >= 1)
 	{
 		std::map<std::string, Channel*>::iterator it = user_tab[j].channels.begin();
@@ -723,8 +741,7 @@ void	User::commandPRIVMSG(std::string &buffer, std::map<int, User>	user_tab, int
 		{
 			std::string tmp = ":";
 			bool in_Chan = inChan(user_tab[j].nickname, it->second->_name);
-			//int pos = 0;
-			//pos = buffer.find(' ') + 1;	
+
 			tmp += getPrefix(user_tab[j]);
 			tmp += " " + buffer + "\r\n";
 			std::cout  << RED << "-> " << tmp << NORMAL;
@@ -732,7 +749,11 @@ void	User::commandPRIVMSG(std::string &buffer, std::map<int, User>	user_tab, int
 				send(it1->socket, tmp.c_str(), tmp.size(), 0);
 		}
 	}
-	else if (user_tab.size() >= 1)
+}
+
+void	User::userPRIVMSG(std::string &buffer, std::map<int, User> user_tab, int j)
+{
+	if (user_tab.size() >= 1)
 	{
 		int pos = 0 ;
 		int pos1 = 0;
@@ -756,5 +777,27 @@ void	User::commandPRIVMSG(std::string &buffer, std::map<int, User>	user_tab, int
 		}
 		if (user1 == user_tab[i].nickname)
 			send (user_tab[i].socket, tmp.c_str(), tmp.size(), 0);
+	}
+}
+
+void	User::commandQUIT(std::string &buffer, std::map<int, User> user_tab, int j)
+{
+	int pos = 0;
+	std::string tmp = ":";
+
+	pos = buffer.find(':');
+	tmp += getPrefix(user_tab[j]);
+	tmp += " " + buffer.substr(0, pos);
+	tmp += "\033[34m Ce zig est enfin partis !!!\033[0m"; // "NOUS POUVONS DIRE QUE C'EST UN LACHE"
+	tmp += "\r\n";
+
+	std::cout << YELLOW << tmp << NORMAL <<std::endl;
+	if (user_tab.size() >= 1)
+	{
+		for (std::map<int, User>::iterator it_u = user_tab.begin(); it_u != user_tab.end(); it_u++)
+		{
+			if (j != it_u->second.socket)
+				send (it_u->second.socket, tmp.c_str(), tmp.size(), 0);
+		}
 	}
 }

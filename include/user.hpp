@@ -55,7 +55,10 @@ class	User
 		//////////////////////////////////
 		//End of channel related command//
 		//////////////////////////////////
-		void	commandPRIVMSG(std::string &buffer, std::map<int, User>	user_tab, int j); 
+		void	commandPRIVMSG(std::string &buffer, std::map<int, User>	user_tab, int j);
+		void	chanPRIVMSG(std::string &buffer, std::map<int, User> user_tab, int j);
+		void	userPRIVMSG(std::string &buffer, std::map<int, User> user_tab, int j);
+		void	commandQUIT(std::string &buffer, std::map<int, User> user_tab, int j);
 		void	commandMOTD(std::string &buffer);
 
 		bool    checkIfRegistred(void);
