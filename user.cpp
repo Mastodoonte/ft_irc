@@ -305,7 +305,7 @@ void	User::commandNICK(std::string &buffer)
 
 	output = ":";
 	while (it != allNickname.end())
-    {
+	{
 		if (*it == new_name)
 		{
 	    	err += ": 443 * " + new_name + " :Nickname is already in use";
@@ -316,8 +316,19 @@ void	User::commandNICK(std::string &buffer)
 		    err = "";
 		}
 		++it;
-    } 
-	allNickname.push_back(new_name);
+	}
+        it = allNickname.begin();
+	while (it != allNickname.end())
+        {
+	    if (*it == nickname)
+	    {
+		*it = new_name;
+		break;
+	    }
+	    ++it;
+	}
+	if (it == allNickname.end())
+	    allNickname.push_back(new_name);
 	output += nickname;
 	output += " NICK ";
 	output += new_name;
@@ -569,7 +580,7 @@ static void JOINwelcome(User &usr, Channel &chan) {
 
 void	User::commandJOIN(std::string &buffer, std::map<int, User>	user_tab, int j) {
     std::vector<std::string> chan;
-    std::vector<std::string> mode;
+    std::vector<std::string> password;
     std::string	tmp = buffer;
     int pos1 = 0;
     int pos2 = 0;
@@ -587,12 +598,16 @@ void	User::commandJOIN(std::string &buffer, std::map<int, User>	user_tab, int j)
     {
 	pos1 = pos2 + 1;
         pos2 = buffer.size() - 2;
-	splitArg(mode, buffer.substr(pos1, pos2 - pos1));
+	splitArg(password, buffer.substr(pos1, pos2 - pos1));
     }
     std::vector<std::string>::iterator it = chan.begin();
+    std::vector<std::string>::iterator pass_it = password.begin();
+    std::string pass = "";
     while (it != chan.end())
     {
-	createOrJoin(channels, *it, user_tab, j);
+	pass = (pass_it == password.end()) ? "" : *pass_it;
+	if (!createOrJoin(channels, *it, user_tab, j, pass))
+	    return ;
 	if (!channels.find(*it)->second->namedCorrectly())
 	{
 	    channels.erase(*it);
@@ -600,6 +615,8 @@ void	User::commandJOIN(std::string &buffer, std::map<int, User>	user_tab, int j)
 	}
 	JOINwelcome(*this, *channels[*it]);
 	++it;
+	if (pass_it != password.end())
+	    ++pass_it;
     }
 }
 

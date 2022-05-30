@@ -26,7 +26,9 @@ class Channel
         ~Channel();
 
 	    std::string             getName(void);
-        std::vector<t_client>   getChanClient();
+	    std::string		    getPassword(void);
+        std::vector<t_client>   getChanClient(void);
+	    void		    setPassword(std::string password);
 
 	bool isOperator(std::string &nickname);
 	void addOperator(std::string &nickname);
@@ -53,6 +55,6 @@ class Channel
 
 };
 
-Channel *createOrJoin(std::map<std::string, Channel*> &channels_list,  std::string chan_name, std::map<int, User>	user_tab, int j);
+Channel *createOrJoin(std::map<std::string, Channel*> &channels_list,  std::string chan_name, std::map<int, User>	user_tab, int j, std::string password);
 
 #endif
