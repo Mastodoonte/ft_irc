@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: fayel-ha <fayel-ha@student.42.fr>          +#+  +:+       +#+        */
+/*   By: florianmastorakis <florianmastorakis@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/28 18:05:43 by florianmast       #+#    #+#             */
-/*   Updated: 2022/05/24 22:45:51 by fayel-ha         ###   ########.fr       */
+/*   Updated: 2022/05/30 21:23:08 by florianmast      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -142,7 +142,7 @@ void    listenUsers(int *sock_err, int *server_socket, int nb_client, global *gl
 //                                                                                          LOOP FUNCTION                                                                                                   |
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 
-void          loopServer(int server_socket)
+void          loopServer(int server_socket, global global)
 {
     bool start =            true;
     int                     nb_slot = 0;
@@ -159,7 +159,6 @@ void          loopServer(int server_socket)
         {            
             strcpy(buffer, "=> Server connected...\n");
             std::cout << "\n=> Please enter : CTRL + C to switch off the server\n" << std::endl;
-            std::cout << "Client: ";
             start = false;
         }
 	    ready_socket = current_socket;
@@ -170,65 +169,73 @@ void          loopServer(int server_socket)
 	    }
 	    for (int j = 0; j < 1024; j++)
 	    {
-	        if (FD_ISSET(j, &ready_socket))
-	        {
-	    	    if (j == server_socket)
-	    	    {
-	    	        //Add a new client
-	    	        if (nb_client < MAX_CLIENT)
+            try
+            {
+	            if (FD_ISSET(j, &ready_socket))
+	            {
+                    
+	    	        if (j == server_socket)
 	    	        {
-	    	    	    /*gérer la connection de nouveaux clients*/
-	    	    	    User new_user;
-                
-	    	    	    /*si le client est valide (il peut être invalide puisque sock est en mode non bloquante)*/
-	    	    	    if (new_user.acceptUsr(server_socket) != -1)
-	    	    	    {
-	    	    	        /*on trouve une place pour le client*/
-	    	    	        user_tab.insert(std::pair<int, User>(new_user.getSocket(), new_user));
-	    	    	        nb_slot++;
-	    	    	        FD_SET(new_user.getSocket(), &current_socket);
-	    	    	        std::cout << GREEN << "#   Serveur info: " << "Accepted, we have " << nb_slot << "/" << MAX_CLIENT << "slot " << NORMAL << std::endl;
-	    	    	    }
-	    	    	    /*si il n'y a plus de place ( normalement il doit y en avoir puisqu'on à vérifier que nb_client < MAX_CLIENT )*/
-	    	    	    else
-	    	    	        std::cout << "#   Refused" <<  nb_slot << "/" << MAX_CLIENT << "slot "<< std::endl;
-                    }
-                }
-                else
-	    	    {
-	    	        /*si client valide*/
-	    	        int s_recv = 0;
-	    	        bzero(buffer, 100);
-	    	        s_recv = recv(j, buffer, 100, MSG_DONTWAIT);
-	    	        if (s_recv != -1 && s_recv)
-	    	        {
-	    	    	     /*Parsing de la commande*/
-	    	    	    user_tab[j].chooseCMD(buffer, user_tab, j);
-                        for (std::map<std::string, Channel*>::iterator it = user_tab[j].channels.begin(); it != user_tab[j].channels.end(); it++)
-                        {
-                            std::cout << YELLOW << "Channel: " << it->second->_name << NORMAL << std::endl;
-                            for (std::vector<t_client>::iterator it1 = it->second->_chan_clients.begin(); it1 != it->second->_chan_clients.end(); it1++)
-                                std::cout << BLUE << "Il y a " << it1->nickname << " qui est present avec la socket : " << RED << it1->socket << NORMAL << std::endl;
+	    	            //Add a new client
+	    	            if (nb_client < MAX_CLIENT)
+	    	            {
+	    	        	    /*gérer la connection de nouveaux clients*/
+	    	        	    User new_user;
+                    
+	    	        	    /*si le client est valide (il peut être invalide puisque sock est en mode non bloquante)*/
+	    	        	    if (new_user.acceptUsr(server_socket) != -1)
+	    	        	    {
+	    	        	        /*on trouve une place pour le client*/
+	    	        	        user_tab.insert(std::pair<int, User>(new_user.getSocket(), new_user));
+	    	        	        nb_slot++;
+	    	        	        FD_SET(new_user.getSocket(), &current_socket);
+	    	        	        std::cout << GREEN << "#   Serveur info: " << "Accepted, we have " << nb_slot << "/" << MAX_CLIENT << "slot " << NORMAL << std::endl;
+	    	        	    }
+	    	        	    /*si il n'y a plus de place ( normalement il doit y en avoir puisqu'on à vérifier que nb_client < MAX_CLIENT )*/
+	    	        	    else
+	    	        	        std::cout << "#   Refused" <<  nb_slot << "/" << MAX_CLIENT << "slot "<< std::endl;
                         }
-	    	        }
-	    	        else if (s_recv == 0)
+                    }
+                    else
 	    	        {
-	    	    	    /*si la taille reçu égale à 0 : déconnection */
-	    	    	    std::cout << GREEN << "#   " <<inet_ntoa(user_tab[j].getAddr().sin_addr) << " csock: " 
-                            << j << "disconected " << NORMAL << std::endl;
-	    	    	    /*on ferme la socket*/
-	    	    	    user_tab[j].clear();
-	    	    	    user_tab.erase(j);
-	    	    	    /*on libère une place de client*/
-	    	    	    nb_client--;
-	    	    	    nb_slot--;
-	    	    	    std::cout << GREEN << "# " << "We have " << nb_slot << "/" << MAX_CLIENT << "slot "<< std::endl;
-	    	    	    FD_CLR(j, &current_socket);
+	    	            /*si client valide*/
+	    	            int s_recv = 0;
+	    	            bzero(buffer, 100);
+	    	            s_recv = recv(j, buffer, 100, MSG_DONTWAIT);
+	    	            if (s_recv != -1 && s_recv)
+	    	            {
+	    	        	 /*Parsing de la commande*/
+	    	        	    user_tab[j].chooseCMD(buffer, user_tab, j, global);
+                            for (std::map<std::string, Channel*>::iterator it = user_tab[j].channels.begin(); it != user_tab[j].channels.end(); it++)
+                            {
+                                std::cout << YELLOW << "Channel: " << it->second->_name << NORMAL << std::endl;
+                                for (std::vector<t_client>::iterator it1 = it->second->_chan_clients.begin(); it1 != it->second->_chan_clients.end(); it1++)
+                                    std::cout << BLUE << "Il y a " << it1->nickname << " qui est present avec la socket : " << RED << it1->socket << NORMAL << std::endl;
+                            }
+                        }
+	    	            else if (s_recv == 0)
+	    	            {
+	    	        	    /*si la taille reçu égale à 0 : déconnection */
+	    	        	    std::cout << GREEN << "#   " <<inet_ntoa(user_tab[j].getAddr().sin_addr) << " csock: " 
+                                << j << "disconected " << NORMAL << std::endl;
+	    	        	    /*on ferme la socket*/
+	    	        	    user_tab[j].clear();
+	    	        	    user_tab.erase(j);
+	    	        	    /*on libère une place de client*/
+	    	        	    nb_client--;
+	    	        	    nb_slot--;
+	    	        	    std::cout << GREEN << "# " << "We have " << nb_slot << "/" << MAX_CLIENT << "slot "<< std::endl;
+	    	        	    FD_CLR(j, &current_socket);
+	    	            }
+	    	            else if (s_recv == -1)
+	    	        	continue ;/* = pas de données reçu ( mode non bloquant de recv)*/
 	    	        }
-	    	        else if (s_recv == -1)
-	    	    	continue ;/* = pas de données reçu ( mode non bloquant de recv)*/
-	    	    }
+                }
             }
-	    }
+            catch(const std::exception& e)
+            {
+               std::cerr << GREEN << "#   " << e.what() << '\n';
+            }
+        }
     }
 }

@@ -13,6 +13,7 @@
 # include <cstdlib>
 # include <stdlib.h>
 # include "Channel.hpp"
+#include "server.hpp"
 # define NORMAL       "\033[0m"
 # define RED         "\033[31m"            
 # define GREEN       "\033[32m"   
@@ -32,7 +33,7 @@ class	User
 		std::string getNickname(void) {return (nickname);} const
 	    sockaddr_in	&getAddr(void){return (addr);}
 	    void    clear(void) {close(socket);}
-	    void    chooseCMD(char *buffer, std::map<int, User>	user_tab, int j);
+	    void    chooseCMD(char *buffer, std::map<int, User>	user_tab, int j, global global);
 	    void    welcomeNewUser(void);
 
 	    void    commandCAP(std::string &buffer);
@@ -40,7 +41,7 @@ class	User
 	    void    commandUSER(std::string &buffer);
 		void	commandPASS(std::string &buffer);
 		void	commandMODE(std::string &buffer);
-		void	modeUser	(std::string &buffer);
+		void	modeUser	(std::string &buffer, int path, std::vector<std::string> extract);
 		///////////////////////////
 		//Channel related command//
 		///////////////////////////
@@ -63,7 +64,7 @@ class	User
 
 		bool    checkIfRegistred(void);
 		void	sendClient(const std::string packet);
-		void	Registration(std::string packet);
+		void	Registration(std::string packet, global global);
 
 	    User    &operator=(const User &cp);
 		bool	caps;
@@ -86,6 +87,7 @@ class	User
 		static std::map<std::string, Channel*>    channels;
 		static std::vector<std::string> allNickname;
 		std::vector<std::string>	mode;
+		std::string getMode(void);
     private:
 	    sockaddr_in	addr;
 	    socklen_t	socket_len;
@@ -98,12 +100,19 @@ std::string getPrefix(User &usr);
 struct errorReturn : public std::exception
 {
 	private:
-
 		const char * _strerror;
+	
 	public:
-
 		errorReturn(const char *str) : _strerror(str) {};
 		const char * what() const throw() { return _strerror; };
 };
+
+ struct badPassword: public std::exception
+    {
+        virtual const char* what() const throw() 
+        {
+            return ("Bad Password written by client");
+        }
+    };
 
 #endif

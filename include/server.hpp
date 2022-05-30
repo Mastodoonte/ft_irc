@@ -6,7 +6,7 @@
 /*   By: florianmastorakis <florianmastorakis@st    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/29 11:33:22 by florianmast       #+#    #+#             */
-/*   Updated: 2022/05/20 15:10:19 by florianmast      ###   ########.fr       */
+/*   Updated: 2022/05/30 17:52:05 by florianmast      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,6 @@ struct global
 void    socketInitialisation(int *server_socket);
 int     settingsAndConnection(int *server_socket, int sock_err, struct sockaddr_in *sin, global *global);
 void    listenUsers(int *sock_err, int *server_socket, int nb_client, global *global);
-void    loopServer(int server_socket);
+void    loopServer(int server_socket, global global);
 
 #endif

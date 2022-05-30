@@ -7,10 +7,14 @@
 #include <sstream>
 #include <string.h>
 #include <errno.h>
+#include <sstream>
+#define SSTR( x ) static_cast< std::ostringstream & >( \
+        ( std::ostringstream() << std::dec << x ) ).str()
 #define SERVER_NAME "TEST_SERVEUR"
 #define VERSION "beta version"
 
 std::map<std::string, Channel*>	    User::channels;
+std::vector<std::string>	ft_extract(std::string src, char set);
 std::vector<std::string>	    User::allNickname;
 
 User::User(void) : caps(false), capsend(false), pass(false), nick(false), user(false), welcome(false), welcome_done(false), change_mode(true), socket(-1) {}
@@ -45,10 +49,6 @@ std::map<std::string, Channel *> User::getChannels() const
 {
     return (this->channels);
 }
-
-//Lors de la connection le client envoi 3 commande
-//dans un seul buffer, donc dès qu'une commande
-//a été éffectuer je la retire du buffer.
 
 void displayCmd(const std::string cmd)
 {
@@ -86,16 +86,16 @@ static void eraseCMD(std::string *buffer) {
 		throw errorReturn(strerror(errno));
 }
 
-void	User::Registration(std::string packet)
+void	User::Registration(std::string packet, global global)
 {
 	(void)packet;
 	if (!str_buffer.compare(0, 6, "CAP LS"))
 	{
-		std::string output =+ ":";
-		output += SERVER_NAME;
-		output += " 421 * CAP";
-		sendClient( output);
-		std::cout << "\n";
+	//	std::string output =+ ":";
+	//	output += SERVER_NAME;
+	//	output += " 421 * CAP";
+	//	sendClient( output);
+	//	std::cout << "\n";
 		caps = true;
         eraseCMD(&str_buffer);
 		return ;
@@ -105,8 +105,12 @@ void	User::Registration(std::string packet)
 		capsend = true;
 		return ;
 	}
-
-	if (!str_buffer.compare(0, 4, "NICK"))
+	if (!str_buffer.compare(0, 4, "NICK") && pass == false)
+	{
+		eraseCMD(&str_buffer);
+		return ;
+	}
+	if (!str_buffer.compare(0, 4, "NICK") && pass == true)
 	{
 		commandNICK(str_buffer);
 		nick = true;
@@ -115,11 +119,24 @@ void	User::Registration(std::string packet)
 	}
 	else if (!str_buffer.compare(0, 4, "PASS"))
 	{
-		if (str_buffer.size() < 2)
+		std::vector<std::string> extract = ft_extract(packet, ' ');
+		if (extract.size() < 2)
 			throw errorReturn(strerror(errno));
+		if (extract[1] != SSTR(global.password))
+		{
+			sendClient("464 :Password incorrect\r\n");
+			if (nickname.size() > 1)
+			{
+				std::string output;
+				output = ":!@ NICK :";
+				output += nickname;
+				output += "\r\n"; 
+				sendClient(output);
+			}
+				throw badPassword();
+		}
 		pass = true;
-
-        eraseCMD(&str_buffer);
+		eraseCMD(&str_buffer);
 		return ;
 	}
     
@@ -151,7 +168,7 @@ bool     User::checkIfRegistred(void)
 }
 
 //Je choisi la bonne commande a call
-void	User::chooseCMD(char *buffer, std::map<int, User>	user_tab, int j)
+void	User::chooseCMD(char *buffer, std::map<int, User>user_tab, int j, global global)
 {
     str_buffer = std::string(buffer);
     while (str_buffer.size())
@@ -165,7 +182,7 @@ void	User::chooseCMD(char *buffer, std::map<int, User>	user_tab, int j)
 			}
 		    if (checkIfRegistred() == false && welcome == false)
 		    {
-		    	Registration(str_buffer);
+		    	Registration(str_buffer, global);
 				if (caps == false)
 					break ;
 				if (pass == false)
@@ -375,17 +392,136 @@ void	User::commandPASS(std::string &buffer)
     (void)buffer;
 }
 
-void	User::modeUser(std::string &buffer)
+
+std::string User::getMode(void)
 {
-	sendClient(ERR_UMODEUNKNOWNFLAG(this, buffer));
+	std::vector<std::string>::iterator it;
+	std::string output;
+
+	while (it != mode.end())
+	{
+		output.append(*it);
+		it++;
+	}
+	return (output);
 }
+void	User::modeUser(std::string &buffer, int path, std::vector<std::string> extract)
+{
+	std::string returnMode = ":";
+	if (path == 1)
+	{
+		std::vector<std::string>::iterator it = mode.begin();
+		returnMode += SERVER_NAME;
+		returnMode += " 221 ";
+		returnMode += nickname;
+		returnMode += " ";
+		if (it != mode.end())
+		{
+			while (it != mode.end())
+			{
+				returnMode += *it;
+				it++;
+			}
+			returnMode += "\r\n";
+			sendClient(returnMode);
+			return;
+		}
+		else
+		{
+			returnMode += "\r\n";
+			sendClient(returnMode);
+			return ;
+		}
+		
+	}
+	else if (path == 2)
+	{
+		if (extract[1] != nickname || extract[2].length() != 2)
+		{
+			sendClient(ERR_UNKNOWNCOMMAND(this, SERVER_NAME));
+			return;
+		}
+	 	if ((extract[2][0] == '+')  && (extract[2][1] == 'i' || extract[2][1] == 'w'
+	 	|| extract[2][1] == 'r'|| extract[2][1] == 'o'|| extract[2][1] == 'O'
+	 	|| extract[2][1] == 's'))
+	 	{
+	 		//si on trouve le char dans notre vector
+	 		std::string new_mode;
+	 		new_mode.push_back(extract[2][1]);
+	 		std::vector<std::string>::iterator find = mode.begin();
+	 		while (find != mode.end())
+	 		{
+	 			if (new_mode == *find)
+	 			{
+	 				sendClient(ERR_UNKNOWNCOMMAND(this, SERVER_NAME));
+	 				return;
+	 			}
+	 			find++;
+	 		}
+	 		mode.push_back(new_mode);
+	 		std::string output = ":";
+	 		output += getPrefix(*this);
+	 		output += " MODE ";
+	 		output += nickname;
+	 		output += " :";
+	 		output += new_mode;
+	 		output += "\r\n";
+	 		sendClient(output);
+	 		return ;
+	 	}
+	 	else if ((extract[2][0] == '-')  && (extract[2][1] == 'i' || extract[2][1] == 'w'
+	 	|| extract[2][1] == 'r'|| extract[2][1] == 'o'|| extract[2][1] == 'O'
+	 	|| extract[2][1] == 's'))
+	 	{
+
+			std::string new_mode;
+	 		new_mode.push_back(extract[2][1]);
+	 		std::vector<std::string>::iterator find = mode.begin();
+			while (find != mode.end())
+	 		{
+	 			if (new_mode == *find)
+	 			{
+	 				find = mode.erase(find);
+					std::string output = ":";
+	 				output += getPrefix(*this);
+	 				output += " MODE ";
+	 				output += nickname;
+	 				output += " :";
+				//	output += getMode();
+	 				output += "\r\n";
+	 				sendClient(output);
+	 				return;
+	 			}
+	 			find++;
+	 		}
+			 //:flmastor!florianm@florianm MODE flmastor :-
+			std::string output = ":";
+	 		output += getPrefix(*this);
+	 		output += " MODE ";
+	 		output += nickname;
+	 		output += " :-\r\n";
+			sendClient(output);
+	 		return ;		
+	 	}
+	 	else
+	 	{
+				sendClient(ERR_UMODEUNKNOWNFLAG(this, buffer));
+				return ;
+		}
+	}
+}
+
 void	User::commandMODE(std::string &buffer)
 {
 	std::vector<std::string> extract = ft_extract(buffer, ' ');
-	if (extract.size() < 3)
+	if (extract.size() < 2)
+	{
 		sendClient(ERR_NEEDMOREPARAMS(this, buffer));
+	}
+	else if(extract.size() == 2)
+		modeUser(buffer, 1, extract);
 	else if(extract.size() == 3)
-		modeUser(buffer);
+		modeUser(buffer, 2, extract);
 	else if (extract.size() == 4)
 		commandModeChannel(buffer);
 	else
