@@ -33,9 +33,11 @@ class	User
 		std::string getNickname(void) {return (nickname);} const
 	    sockaddr_in	&getAddr(void){return (addr);}
 	    void    clear(void) {close(socket);}
-	    void    chooseCMD(char *buffer, std::map<int, User>	user_tab, int j, global global);
+	    void    chooseCMD(std::map<int, User>	user_tab, int j, global global);
 	    void    welcomeNewUser(void);
 
+	    bool    isBufferReady(std::string to_add);
+	    void    clearBuffer(void);
 	    void    commandCAP(std::string &buffer);
 	    void    commandNICK(std::string &buffer);
 	    void    commandUSER(std::string &buffer);
@@ -53,6 +55,7 @@ class	User
 		void	commandTOPIC(std::string &buffer);
 		void	commandLIST(std::string &buffer);
 		void	commandINVITE(std::string &buffer);
+		void	commandKICK(std::string &buffer);
 		//////////////////////////////////
 		//End of channel related command//
 		//////////////////////////////////
@@ -76,11 +79,11 @@ class	User
 		bool	welcome_done;
 		bool	change_mode;
 
+	    std::string	 str_buffer;
 	    std::string  username;
 	    std::string  nickname;
 	    std::string  realname;
 	    std::string	 ipaddr;
-		std::string	 str_buffer;
 		int	socket;
 
 		std::map<std::string, Channel *> getChannels() const;

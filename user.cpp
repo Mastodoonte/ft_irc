@@ -17,7 +17,7 @@ std::map<std::string, Channel*>	    User::channels;
 std::vector<std::string>	ft_extract(std::string src, char set);
 std::vector<std::string>	    User::allNickname;
 
-User::User(void) : caps(false), capsend(false), pass(false), nick(false), user(false), welcome(false), welcome_done(false), change_mode(true), socket(-1) {}
+User::User(void) : caps(false), capsend(false), pass(false), nick(false), user(false), welcome(false), welcome_done(false), change_mode(true), socket(-1) { str_buffer = "";}
 User::~User(void) {
 }
 
@@ -75,6 +75,25 @@ static void eraseCMD(std::string *buffer) {
     else
 	buffer->erase(0, buffer->size());
 	
+}
+
+void	User::clearBuffer(void) {
+    str_buffer = "";
+}
+
+bool	User::isBufferReady(std::string to_add) {
+    str_buffer += to_add;
+    int size = str_buffer.size();
+    if (str_buffer[size - 1] == '\n')
+    {
+	if (size > 2 && str_buffer[size - 2] != '\r')
+	{
+	    str_buffer[size - 1] = '\r';
+	    str_buffer += '\n';
+	}
+	return (true);
+    }
+    return (false);
 }
 
  void	User::sendClient(const std::string packet)
@@ -151,7 +170,9 @@ void	User::Registration(std::string packet, global global)
         eraseCMD(&str_buffer);
 		return ;
 	}
-	errorReturn(strerror(errno));
+     std::cout << "Unknown command: " << str_buffer;
+     eraseCMD(&str_buffer);
+	//errorReturn(strerror(errno));
 }
 
 bool     User::checkIfRegistred(void)
@@ -168,9 +189,8 @@ bool     User::checkIfRegistred(void)
 }
 
 //Je choisi la bonne commande a call
-void	User::chooseCMD(char *buffer, std::map<int, User>user_tab, int j, global global)
+void	User::chooseCMD(std::map<int, User>user_tab, int j, global global)
 {
-    str_buffer = std::string(buffer);
     while (str_buffer.size())
 	{
 		while (str_buffer.size())
@@ -264,11 +284,16 @@ void	User::chooseCMD(char *buffer, std::map<int, User>user_tab, int j, global gl
 				commandINVITE(str_buffer);
 				eraseCMD(&str_buffer);
 		    }
-			else if (!str_buffer.compare(0, 4, "QUIT"))
-			{
+		    else if (!str_buffer.compare(0, 4, "QUIT"))
+		    {
 				commandQUIT(str_buffer, user_tab, j);
 				eraseCMD(&str_buffer);
-			}
+		    }
+		    else if (!str_buffer.compare(0, 4, "KICK"))
+		    {
+			commandKICK(str_buffer);
+			eraseCMD(&str_buffer);
+		    }
 		    else
 		    {
 				std::cout << BLUE << "Unknown command: "  << str_buffer << NORMAL << std::endl;
@@ -853,6 +878,56 @@ void	User::commandINVITE(std::string &buffer) {
     RPL_INVITING += getPrefix(*this) + " 341 " + nickname + " ";
     RPL_INVITING += token[2] + " " + token[1] + "\r\n";
     sendClient(RPL_INVITING);
+}
+
+void	User::commandKICK(std::string &buffer) {
+    std::vector<std::string> token = ft_extract(buffer, ' ');
+    std::string err = "";
+    std::string msg = "";
+
+    if (token.size() < 3)
+    {
+	err = ":" + getPrefix(*this) + " 461 KICK :Not enough parameters";
+	err += "\r\n";
+	sendClient(err);
+	return ;
+    }
+    if (!chanExist(token[1]))
+    {
+	err = ":" + getPrefix(*this) + " 403 " + token[1] + " :No such channel";
+	err += "\r\n";
+	sendClient(err);
+	return ;
+    }
+    if (!channels[token[1]]->isOperator(nickname))
+    {
+	err = ":" + getPrefix(*this) + " 482 " + nickname + " " + token[1];
+	err += " :You're not channel operator\r\n";
+	sendClient(err);
+	return ;
+
+    }
+    if (!inChan(token[2], token[1]))
+    {
+	err = ":" + getPrefix(*this) + " 441 " + token[2] + " ";
+	err += token[1] + " :They aren't on that channel\r\n";
+	sendClient(err);
+	return ;
+    }
+    std::cout << "B" << std::endl;
+    if (token.size() > 3)
+    {
+	if (token[3][0] == ':')
+	{
+	    for (unsigned int i = 3; i < token.size(); i++)
+		msg += token[i];
+	}
+    }
+    std::cout << "A" << std::endl;
+    std::string RPL_KICK = "";
+    RPL_KICK = ":" + getPrefix(*this) + " KICK " + token[1];
+    RPL_KICK += " " + token[2] + " " + msg + "\r\n";
+    channels[token[1]]->sendAllClient(RPL_KICK);
 }
 
 //////////////////////////////////

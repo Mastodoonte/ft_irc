@@ -202,10 +202,11 @@ void          loopServer(int server_socket, global global)
 	    	            int s_recv = 0;
 	    	            bzero(buffer, 100);
 	    	            s_recv = recv(j, buffer, 100, MSG_DONTWAIT);
-	    	            if (s_recv != -1 && s_recv)
+	    	            if (s_recv != -1 && s_recv && user_tab[j].isBufferReady(buffer))
 	    	            {
 	    	        	 /*Parsing de la commande*/
-	    	        	    user_tab[j].chooseCMD(buffer, user_tab, j, global);
+	    	        	    user_tab[j].chooseCMD(user_tab, j, global);
+				    user_tab[j].clearBuffer();
                             for (std::map<std::string, Channel*>::iterator it = user_tab[j].channels.begin(); it != user_tab[j].channels.end(); it++)
                             {
                                 std::cout << YELLOW << "Channel: " << it->second->_name << NORMAL << std::endl;
