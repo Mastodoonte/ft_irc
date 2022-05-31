@@ -15,6 +15,12 @@ Channel::Channel(const Channel &src)
     _name = src._name;
 }
 
+Channel::Channel(void) : topic(""), _name(""), _password(""), _isClosed(false) {
+}
+
+Channel::~Channel(void) {
+}
+
 Channel Channel::operator=(const Channel &src)
 {
     this->_name = src._name;
@@ -137,37 +143,37 @@ void	    Channel::setPassword(std::string password) {
  * Here the objective is to create a channel and add it right into our map channels_list
  * if the channel doesn't exit, otherwise we return the pointer of the channel
  * */
-Channel *createOrJoin(std::map<std::string, Channel*> &channels_list, std::string chan_name, std::map<int, User>    user_tab, int j, std::string password)
+bool	createOrJoin(std::map<std::string, Channel> &channels_list, std::string chan_name, std::map<int, User>    user_tab, int j, std::string password)
 {
-    std::map<std::string, Channel*>::iterator it = channels_list.begin();
+    std::map<std::string, Channel>::iterator it = channels_list.begin();
     std::string err = "";
     while (it != channels_list.end())
     {
         if (it->first == chan_name)
         {
-	    if (it->second->getPassword() != password)
+	    if (it->second.getPassword() != password)
 	    {
 		err += ":" + getPrefix(user_tab[j]) + " 475 " + it->first;
 		err += " :Cannot join channel (+k)\r\n";
 		user_tab[j].sendClient(err);
-		return (NULL);
+		return (false);
 	    }
             t_client tmp1;
             tmp1.socket = user_tab[j].socket;
             tmp1.nickname = user_tab[j].nickname;
-            it->second->_chan_clients.push_back(tmp1);
-            return (it->second);
+            it->second._chan_clients.push_back(tmp1);
+            return (true);
         }
         it++;
     }
-    Channel *new_channel = new Channel(chan_name);
+    Channel new_channel(chan_name);
     t_client tmp;
     tmp.socket = user_tab[j].socket;
     tmp.nickname = user_tab[j].nickname;
-    new_channel->_chan_clients.push_back(tmp);
-    new_channel->addOperator(user_tab[j].nickname);
+    new_channel._chan_clients.push_back(tmp);
+    new_channel.addOperator(user_tab[j].nickname);
     if (password != "")
-	new_channel->setPassword(password);
+	new_channel.setPassword(password);
     channels_list[chan_name] = new_channel;
-    return new_channel;
+    return true;
 }

@@ -22,6 +22,7 @@ class Channel
         Channel(const std::string &src);
         Channel(const std::string &src, const std::string &password);
         Channel(const Channel &src);
+	Channel(void);
         Channel operator=(const Channel &src);
         ~Channel();
 
@@ -42,7 +43,6 @@ class Channel
         std::string             _name;
 	
     private:
-        Channel(){};
         //std::string             _name; // Publc
         std::string             _password;
         bool                    _isClosed;
@@ -55,6 +55,6 @@ class Channel
 
 };
 
-Channel *createOrJoin(std::map<std::string, Channel*> &channels_list,  std::string chan_name, std::map<int, User>	user_tab, int j, std::string password);
+bool createOrJoin(std::map<std::string, Channel> &channels_list,  std::string chan_name, std::map<int, User>	user_tab, int j, std::string password);
 
 #endif

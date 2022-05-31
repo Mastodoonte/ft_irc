@@ -210,10 +210,10 @@ void          loopServer(int server_socket, global global)
 						 /*Parsing de la commande*/
 							user_tab[j].chooseCMD(user_tab, j, global);
 					user_tab[j].clearBuffer();
-							for (std::map<std::string, Channel*>::iterator it = user_tab[j].channels.begin(); it != user_tab[j].channels.end(); it++)
+							for (std::map<std::string, Channel>::iterator it = user_tab[j].channels.begin(); it != user_tab[j].channels.end(); it++)
 							{
-								std::cout << YELLOW << "Channel: " << it->second->_name << NORMAL << std::endl;
-								for (std::vector<t_client>::iterator it1 = it->second->_chan_clients.begin(); it1 != it->second->_chan_clients.end(); it1++)
+								std::cout << YELLOW << "Channel: " << it->second._name << NORMAL << std::endl;
+								for (std::vector<t_client>::iterator it1 = it->second._chan_clients.begin(); it1 != it->second._chan_clients.end(); it1++)
 									std::cout << BLUE << "Il y a " << it1->nickname << " qui est present avec la socket : " << RED << it1->socket << NORMAL << std::endl;
 							}
 						}

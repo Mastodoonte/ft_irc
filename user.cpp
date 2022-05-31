@@ -13,7 +13,7 @@
 #define SERVER_NAME "TEST_SERVEUR"
 #define VERSION "beta version"
 
-std::map<std::string, Channel*>	    User::channels;
+std::map<std::string, Channel>	    User::channels;
 std::vector<std::string>	ft_extract(std::string src, char set);
 std::vector<std::string>	    User::allNickname;
 
@@ -45,7 +45,7 @@ int	User::acceptUsr(int server_socket)
     return (0);
 }
 
-std::map<std::string, Channel *> User::getChannels() const
+std::map<std::string, Channel> User::getChannels() const
 {
     return (this->channels);
 }
@@ -377,12 +377,12 @@ void	User::commandNICK(std::string &buffer)
 	output += "\r\n";
 	
 	//find and change into channel
-	std::map<std::string, Channel*>::iterator indexChannel;
+	std::map<std::string, Channel>::iterator indexChannel;
 	indexChannel = this->channels.begin();
 	if (indexChannel != this->channels.end())
 	{
-		std::vector<t_client>::iterator it1 = indexChannel->second->_chan_clients.begin();
-		std::vector<t_client>::iterator itend = indexChannel->second->_chan_clients.end();
+		std::vector<t_client>::iterator it1 = indexChannel->second._chan_clients.begin();
+		std::vector<t_client>::iterator itend = indexChannel->second._chan_clients.end();
 		while (it1 != itend)
 		{
 			if (it1->nickname == nickname)
@@ -647,13 +647,13 @@ void	User::commandJOIN(std::string &buffer, std::map<int, User>	user_tab, int j)
 	pass = (pass_it == password.end()) ? "" : *pass_it;
 	if (!createOrJoin(channels, *it, user_tab, j, pass))
 	    return ;
-	if (!channels.find(*it)->second->namedCorrectly())
+	if (!channels.find(*it)->second.namedCorrectly())
 	{
 	    channels.erase(*it);
 	    std::cout << "Error: invalid argument" << std::endl;
 	    return ;
 	}
-	JOINwelcome(*this, *channels[*it]);
+	JOINwelcome(*this, channels[*it]);
 	++it;
 	if (pass_it != password.end())
 	    ++pass_it;
@@ -661,11 +661,11 @@ void	User::commandJOIN(std::string &buffer, std::map<int, User>	user_tab, int j)
 }
 
 bool User::chanExist(std::string &chan) {
-    std::map<std::string, Channel*>::iterator it = channels.begin();
+    std::map<std::string, Channel>::iterator it = channels.begin();
 
     while (it != channels.end())
     {
-	if (it->second->getName() == chan)
+	if (it->second.getName() == chan)
 	    return (true);
 	++it;
     }
@@ -673,9 +673,9 @@ bool User::chanExist(std::string &chan) {
 }
 
 bool User::inChan(std::string &nickname, std::string &chan) {
-    std::vector<t_client>::iterator it = channels[chan]->_chan_clients.begin();
+    std::vector<t_client>::iterator it = channels[chan]._chan_clients.begin();
 
-    while (it != channels[chan]->_chan_clients.end())
+    while (it != channels[chan]._chan_clients.end())
     {
 	if (it->nickname == nickname)
 	    return (true);
@@ -742,7 +742,7 @@ void	User::commandModeChannel(std::string &buffer) {
 	return ;
     }
 
-    std::map<std::string, Channel*>::iterator it = channels.begin();
+    std::map<std::string, Channel>::iterator it = channels.begin();
     while (it != channels.end())
     {
 	if (it->first == token[1])
@@ -770,7 +770,7 @@ void	User::commandModeChannel(std::string &buffer) {
 	sendClient(err);
 	return ;
     }
-    if (!channels[token[1]]->isOperator(nickname))
+    if (!channels[token[1]].isOperator(nickname))
     {
 	err = ":" + getPrefix(*this) + " 482 " + nickname + " " + token[1];
 	err += " :You're not channel operator\r\n";
@@ -778,9 +778,9 @@ void	User::commandModeChannel(std::string &buffer) {
 	return ;
     }
     if (token[2][0] == '+')
-	channels[token[1]]->addOperator(token[3]);
+	channels[token[1]].addOperator(token[3]);
     else if (token[2][0] == '-')
-	channels[token[1]]->removeOperator(token[3]);
+	channels[token[1]].removeOperator(token[3]);
     std::string RPL_CHANNELMODEIS = ":" + getPrefix(*this) + " 324 " + nickname + " ";
     RPL_CHANNELMODEIS += token[1] + " " + token[2] + " " + token[3] + "\r\n";
     sendClient(RPL_CHANNELMODEIS);
@@ -797,7 +797,7 @@ void	User::commandTOPIC(std::string &buffer) {
 	sendClient(err);
 	return ;
     }
-    std::map<std::string, Channel*>::iterator it = channels.begin();
+    std::map<std::string, Channel>::iterator it = channels.begin();
     while (it != channels.end())
     {
 	if (it->first == token[1])
@@ -822,11 +822,11 @@ void	User::commandTOPIC(std::string &buffer) {
     {
 	int pos = buffer.rfind(':', buffer.size()) + 1;
 	std::string topic = buffer.substr(pos, buffer.size() - pos - 2);
-	channels[token[1]]->topic = topic;
+	channels[token[1]].topic = topic;
     }
     std::string RPL_TOPIC = ":" + getPrefix(*this) + " 332 " + nickname;
-    RPL_TOPIC += " " + token[1] + " :" + channels[token[1]]->topic + "\r\n";
-    channels[token[1]]->sendAllClient(RPL_TOPIC);
+    RPL_TOPIC += " " + token[1] + " :" + channels[token[1]].topic + "\r\n";
+    channels[token[1]].sendAllClient(RPL_TOPIC);
 }
 
 void	User::commandLIST(std::string &buffer) {
@@ -837,12 +837,12 @@ void	User::commandLIST(std::string &buffer) {
     if (token.size() < 2)
 	return ;
 
-    std::map<std::string, Channel*>::iterator it = channels.begin();
+    std::map<std::string, Channel>::iterator it = channels.begin();
     while (it != channels.end())
     {
 	if (it->first == token[1])
 	{
-	    RPL_LIST += " " + it->second->_name + " :" + it->second->topic + "\r\n";
+	    RPL_LIST += " " + it->second._name + " :" + it->second.topic + "\r\n";
 	    RPL_LISTEND += " :End of LIST\r\n";
 	    sendClient(RPL_LIST);
 	    sendClient(RPL_LISTEND);
@@ -863,7 +863,7 @@ void	User::commandINVITE(std::string &buffer) {
 	return ;
     }
 
-    std::map<std::string, Channel*>::iterator ite = channels.begin();
+    std::map<std::string, Channel>::iterator ite = channels.begin();
     while (ite != channels.end())
     {
 	if (ite->first == token[2] && !inChan(nickname, token[2]))
@@ -900,7 +900,7 @@ void	User::commandKICK(std::string &buffer) {
 	sendClient(err);
 	return ;
     }
-    if (!channels[token[1]]->isOperator(nickname))
+    if (!channels[token[1]].isOperator(nickname))
     {
 	err = ":" + getPrefix(*this) + " 482 " + nickname + " " + token[1];
 	err += " :You're not channel operator\r\n";
@@ -928,7 +928,7 @@ void	User::commandKICK(std::string &buffer) {
     std::string RPL_KICK = "";
     RPL_KICK = ":" + getPrefix(*this) + " KICK " + token[1];
     RPL_KICK += " " + token[2] + " " + msg + "\r\n";
-    channels[token[1]]->sendAllClient(RPL_KICK);
+    channels[token[1]].sendAllClient(RPL_KICK);
 }
 
 //////////////////////////////////
@@ -947,12 +947,12 @@ void	User::chanPRIVMSG(std::string &buffer, std::map<int, User> user_tab, int j)
 {
 	if (channels.size() >= 1)
 	{
-		std::map<std::string, Channel*>::iterator it = user_tab[j].channels.begin();
+		std::map<std::string, Channel>::iterator it = user_tab[j].channels.begin();
 
-		for (std::vector<t_client>::iterator it1 = it->second->_chan_clients.begin(); it1 != it->second->_chan_clients.end(); it1++)
+		for (std::vector<t_client>::iterator it1 = it->second._chan_clients.begin(); it1 != it->second._chan_clients.end(); it1++)
 		{
 			std::string tmp = ":";
-			bool in_Chan = inChan(user_tab[j].nickname, it->second->_name);
+			bool in_Chan = inChan(user_tab[j].nickname, it->second._name);
 
 			tmp += getPrefix(user_tab[j]);
 			tmp += " " + buffer + "\r\n";

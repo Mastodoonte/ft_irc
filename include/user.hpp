@@ -86,8 +86,8 @@ class	User
 	    std::string	 ipaddr;
 		int	socket;
 
-		std::map<std::string, Channel *> getChannels() const;
-		static std::map<std::string, Channel*>    channels;
+		std::map<std::string, Channel> getChannels() const;
+		static std::map<std::string, Channel>    channels;
 		static std::vector<std::string> allNickname;
 		std::vector<std::string>	mode;
 		std::string getMode(void);
