@@ -651,6 +651,7 @@ void	User::commandJOIN(std::string &buffer, std::map<int, User>	user_tab, int j)
 	{
 	    channels.erase(*it);
 	    std::cout << "Error: invalid argument" << std::endl;
+	    return ;
 	}
 	JOINwelcome(*this, *channels[*it]);
 	++it;
