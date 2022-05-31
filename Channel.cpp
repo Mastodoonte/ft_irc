@@ -107,7 +107,11 @@ bool Channel::namedCorrectly(void)
 
     parameters = chan_name.substr(0, 1);
     if (parameters != "&" && parameters != "#" && parameters != "+" && parameters != "!")
-        return (false);
+    {
+        std::cout << chan_name << std::endl;
+        chan_name = "#" + chan_name;
+        std::cout << chan_name << std::endl;
+    }
     found = chan_name.find(" ");
     if (found != std::string::npos)
         return(false);

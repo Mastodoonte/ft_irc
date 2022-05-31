@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: florianmastorakis <florianmastorakis@st    +#+  +:+       +#+        */
+/*   By: fayel-ha <fayel-ha@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/29 11:33:22 by florianmast       #+#    #+#             */
-/*   Updated: 2022/05/30 17:52:05 by florianmast      ###   ########.fr       */
+/*   Updated: 2022/05/31 15:35:10 by fayel-ha         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 #include <sys/socket.h> // Permet de d'utiliser la fonction socket
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <signal.h>
 #include <unistd.h>
 #include <iostream>
 #include <string>

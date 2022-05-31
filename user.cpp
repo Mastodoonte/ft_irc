@@ -124,12 +124,12 @@ void	User::Registration(std::string packet, global global)
 		capsend = true;
 		return ;
 	}
-	if (!str_buffer.compare(0, 4, "NICK") && pass == false)
-	{
-		eraseCMD(&str_buffer);
-		return ;
-	}
-	if (!str_buffer.compare(0, 4, "NICK") && pass == true)
+	// if (!str_buffer.compare(0, 4, "NICK"))// && pass == false)
+	// {
+	// 	eraseCMD(&str_buffer);
+	// 	return ;
+	// }
+	if (!str_buffer.compare(0, 4, "NICK"))// && pass == true)
 	{
 		commandNICK(str_buffer);
 		nick = true;

@@ -2,6 +2,8 @@
 #include "include/user.hpp"
 #define MAX_CLIENT 10
 
+bool must_exit = false;
+
 bool isNumber(const std::string& str)
 {
     return str.find_first_not_of("0123456789") == std::string::npos;
@@ -24,6 +26,12 @@ void     parsing(int ac, char **av,  global *global)
     global->password = atoi(password.c_str());
 }
 
+void    ft_exit_c(int i)
+{
+    (void)i;
+    must_exit = 1;
+}
+
 int main(int ac, char **av)
 {
     int                     server_socket;
@@ -37,6 +45,7 @@ int main(int ac, char **av)
         socketInitialisation(&server_socket);
         sock_err = settingsAndConnection(&server_socket, sock_err, &sin, &global);
         listenUsers(&sock_err, &server_socket, MAX_CLIENT, &global);
+        signal(SIGINT, ft_exit_c);
         loopServer(server_socket, global);
         close(server_socket);
         return (EXIT_SUCCESS);
