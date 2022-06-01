@@ -44,7 +44,6 @@ extern bool must_exit;
 void    socketInitialisation(int *server_socket)
 {
 	*server_socket = socket(AF_INET, SOCK_STREAM, 0);
-	int flags = 0;
 	
 	int enable = 1;
 	if (setsockopt(*server_socket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
@@ -56,8 +55,7 @@ void    socketInitialisation(int *server_socket)
 		throw errorReturn("Error: sock creation");
 	}
 	 //Cf sujet, mode non bloquant pour la fonction accept
-	flags=fcntl(*server_socket,F_GETFL);
-	fcntl(*server_socket,F_SETFL,flags | O_NONBLOCK);
+	fcntl(*server_socket,F_SETFL,O_NONBLOCK);
 
 }
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

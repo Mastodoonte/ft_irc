@@ -131,6 +131,14 @@ void	User::Registration(std::string packet, global global)
 	// }
 	if (!str_buffer.compare(0, 4, "NICK"))// && pass == true)
 	{
+		std::vector<std::string> extract;
+		extract = ft_extract(str_buffer, ' ');
+		if (extract.size() < 2)
+		{
+			sendClient(ERR_NEEDMOREPARAMS(this, str_buffer));
+			eraseCMD(&str_buffer);
+			return ;
+		}
 		commandNICK(str_buffer);
 		nick = true;
          eraseCMD(&str_buffer);
@@ -140,7 +148,11 @@ void	User::Registration(std::string packet, global global)
 	{
 		std::vector<std::string> extract = ft_extract(packet, ' ');
 		if (extract.size() < 2)
-			throw errorReturn(strerror(errno));
+		{
+			sendClient(ERR_NEEDMOREPARAMS(this, str_buffer));
+			eraseCMD(&str_buffer);
+			return ;
+		}
 		if (extract[1] != SSTR(global.password))
 		{
 			sendClient("464 :Password incorrect\r\n");
@@ -152,6 +164,7 @@ void	User::Registration(std::string packet, global global)
 				output += "\r\n"; 
 				sendClient(output);
 			}
+				eraseCMD(&str_buffer);
 				throw badPassword();
 		}
 		pass = true;
@@ -161,6 +174,13 @@ void	User::Registration(std::string packet, global global)
     
      if (!str_buffer.compare(0, 4, "USER"))
 	{
+		std::vector<std::string> extract;
+		extract = ft_extract(str_buffer, ' ');
+		if (extract.size() < 2)
+		{
+			sendClient(ERR_NEEDMOREPARAMS(this, str_buffer));
+			throw errorReturn(strerror(errno));
+		}
 		if (str_buffer.size() < 4)
 		{
 			throw errorReturn(strerror(errno));
@@ -341,6 +361,11 @@ void	User::commandNICK(std::string &buffer)
 {    
 	std::string output;
 	std::vector<std::string> extract = ft_extract(buffer, ' ');
+	if (extract.size() < 2)
+	{
+		sendClient(ERR_NEEDMOREPARAMS(this, buffer));
+		return;
+	}
 	std::vector<std::string>::iterator it = allNickname.begin();
 	std::string new_name = extract[1];
 	std::string err = "";
@@ -401,6 +426,11 @@ void	User::commandNICK(std::string &buffer)
 void	User::commandUSER(std::string &buffer)
 {
 	std::vector<std::string> extract = ft_extract(buffer, ' ');
+	if (extract.size() < 2)
+	{
+		sendClient(ERR_NEEDMOREPARAMS(this, buffer));
+		return;
+	}
 	std::vector<std::string>::iterator it = extract.begin();
 	it++;
 	while(it != extract.end())

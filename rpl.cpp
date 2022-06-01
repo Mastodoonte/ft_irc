@@ -34,7 +34,12 @@ std::string	RPL_WELCOME(User* client, const std::string& network)
     (void)network;
     std::vector<std::string> extract = ft_extraction(client->username, ' ');
     std::string RPL_WELCOME = ":";
-    RPL_WELCOME += getPrefix(*client);
+    //Florian!AURELIEN@127.0.0.1
+    RPL_WELCOME += client->nickname;
+    RPL_WELCOME += "!";
+    RPL_WELCOME += client->username;
+    RPL_WELCOME += "@";
+    RPL_WELCOME += "127.0.0.1";
     RPL_WELCOME += " 001 ";
     RPL_WELCOME += client->nickname;
     RPL_WELCOME += " :Welcome to the Internet Relay Network, ";
@@ -42,7 +47,8 @@ std::string	RPL_WELCOME(User* client, const std::string& network)
     RPL_WELCOME += "!";
     RPL_WELCOME += client->nickname;
     RPL_WELCOME += "@";
-    RPL_WELCOME += extract[2];
+    RPL_WELCOME += "127.0.0.1";
+    //RPL_WELCOME += extract[2];
     RPL_WELCOME += "\r\n";
     return (RPL_WELCOME);
 }
