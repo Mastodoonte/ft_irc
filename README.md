@@ -50,6 +50,6 @@ Using your reference client with your server should be similar to using it with 
 
 ◦ So you need to implement operator-specific commands.
 
-- Of course, you are expected to have clean code.
+Of course, you are expected to have clean code.
 
 <!--badges : https://badge42.vercel.app-->
