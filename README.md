@@ -39,7 +39,8 @@ compile if you add the flag -std=c++98
 - There are several IRC clients. You must choose one of them as a reference. Your reference client will be used for evaluation.
 - Your reference client must be able to connect to your server without encountering any errors.
 - The communication between the client and the server will be done over TCP/IP (v4 or v6).
-- Using your reference client with your server should be similar to using it with an official IRC server. However, only the following features are mandatory:
+
+Using your reference client with your server should be similar to using it with an official IRC server. However, only the following features are mandatory:
 
 ◦ You must be able to authenticate, set a nickname, username, re-join a channel, send and receive private messages, with your reference client.
 
